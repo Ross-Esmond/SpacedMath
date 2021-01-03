@@ -1,8 +1,10 @@
 from flask import Flask
 from flask_restful import Resource, Api, reqparse, request
+from flask_cors import CORS
 from generate import problem 
 
 application = Flask(__name__)
+CORS(application, origins='http://spacedmath.com/')
 api = Api(application)
 
 class Problems(Resource):
