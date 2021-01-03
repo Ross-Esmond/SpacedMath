@@ -4,7 +4,7 @@ from flask_cors import CORS
 from generate import problem 
 
 application = Flask(__name__)
-CORS(application, origins='http://spacedmath.com/')
+CORS(application)
 api = Api(application)
 
 class Problems(Resource):
