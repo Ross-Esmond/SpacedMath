@@ -1,2 +1,2 @@
-web: gunicorn spacedmath:app
+web: gunicorn server:application
 
