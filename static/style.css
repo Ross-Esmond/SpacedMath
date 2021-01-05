@@ -2,12 +2,16 @@
 	margin: auto;
 	width 100%;
 	padding: 10px;
-	max-width: 650px;
+	max-width: 750px;
+	display: flex;
+	flex-direction:row;
 }
 .options {
 	width 200px;
+	padding: 10px; 
 }
 .math-problem {
 	font-size: 3em;
+	margin: auto;
 }
 

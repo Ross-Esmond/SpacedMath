@@ -1,7 +1,12 @@
 fetch('http://pure-springs-76606.herokuapp.com/options')
   .then(response => response.json())
   .then(json => {
-	  console.log(json.options)
+    let opEl = document.querySelector('.options')
+    for (let option of json.options) {
+      let child = document.createElement('div')
+      child.innerHTML = `<input type="checkbox"><label>${option}</label>`
+      opEl.appendChild(child)
+    }
   })
 
 fetch('http://pure-springs-76606.herokuapp.com/', {
