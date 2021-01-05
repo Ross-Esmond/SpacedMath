@@ -65,7 +65,7 @@ def fill(const, allowed):
         for ind, arg in enumerate(const['args']):
             if arg != None and (arg['name'] == 'mult' or arg['name'] == 'div'):
                 insertArg(const, {
-                    'name': 'add',
+                    'name': 'addition',
                     'args': [None, None]
                 }, ind)
         if const['name'] == 'mult':
@@ -90,7 +90,7 @@ def fill(const, allowed):
                     'degree': randrange(deg, 10) if allowed['power'] else 1,
                     'terms': randrange(2, 3) if allowed['addition'] else 1
                 } 
-    elif const['name'] == 'add':
+    elif const['name'] == 'addition':
         for ind, arg in enumerate(const['args']):
             if arg == None:
                 const['args'][ind] = {
@@ -107,7 +107,7 @@ def convert(const):
         return convert(const['args'][0])*convert(const['args'][1])
     if const['name'] == 'div':
         return convert(const['args'][0])/convert(const['args'][1])
-    if const['name'] == 'add':
+    if const['name'] == 'addition':
         return convert(const['args'][0])+convert(const['args'][1])
     if const['name'] == 'poly':
         return polynomial(const['degree'], const['terms'])
