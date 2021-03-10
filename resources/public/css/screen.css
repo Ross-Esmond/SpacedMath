@@ -32,4 +32,9 @@ body {
   /* Support for Firefox. */
   -moz-osx-font-smoothing: grayscale;
 }
+.flashcard {
+  max-width: 500px;
+  margin: auto;
+  padding: 10px;
+}
 

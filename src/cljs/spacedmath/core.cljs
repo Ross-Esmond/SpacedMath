@@ -1,5 +1,6 @@
 (ns spacedmath.core
   (:require
+    [spacedmath.problems :as prb]
     [day8.re-frame.http-fx]
     [reagent.dom :as rdom]
     [reagent.core :as r]
@@ -34,11 +35,26 @@
                 {:class (when @expanded? :is-active)}
                 [:div.navbar-start
                  [nav-link "#/" "Home" :home]
-                 [nav-link "#/about" "About" :about]]]]))
+                 [nav-link "#/about" "About" :about]
+                 [nav-link "#/problems" "Problems" :problems]]]]))
 
 (defn about-page []
   [:section.section>div.container>div.content
    [:img {:src "/img/warning_clojure.png"}]])
+
+(def what ((:generate prb/addition) #{::prb/sin ::prb/cos}))
+
+(defn problems-page-fn []
+  (do
+    (. js/React useEffect (fn [] (. js/MathJax typeset)))
+    [:section.flashcard>div.container>div.content
+     [:div
+      {:dangerouslySetInnerHTML {:__html (:problem what)}}]
+     [:div
+      {:dangerouslySetInnerHTML {:__html (:solution what)}}]]))
+
+(defn problems-page []
+ [:f> problems-page-fn]) 
 
 (defn home-page []
   [:section.section>div.container>div.content
@@ -60,7 +76,9 @@
            :view        #'home-page
            :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
      ["/about" {:name :about
-                :view #'about-page}]]))
+                :view #'about-page}]
+     ["/problems" {:name :problems
+                   :view #'problems-page}]]))
 
 (defn start-router! []
   (rfe/start!
