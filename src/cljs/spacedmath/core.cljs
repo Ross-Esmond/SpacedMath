@@ -42,7 +42,7 @@
   [:section.section>div.container>div.content
    [:img {:src "/img/warning_clojure.png"}]])
 
-(def what ((:generate prb/addition) #{::prb/sin ::prb/cos}))
+(def what ((:generate prb/derivation) [::prb/add [::prb/sin ::prb/x] [::prb/exp ::prb/x]]))
 
 (defn problems-page-fn []
   (do

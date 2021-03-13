@@ -16,12 +16,11 @@
     (str "(" (latex (nth func 1)) ")(" (latex (nth func 2)) ")")))
 (defmethod latex :default [_] "Nothing")
 
-(def skills #{ ::add ::sin ::cos ::tan ::sec ::csc ::cot ::exp})
+(def skills (atom #{ ::add ::power ::chain}))
 
 (derive ::add ::commutative)
 (derive ::trig ::unary)
 (derive ::trig ::exec)
-(derive ::trig ::ident)
 (derive ::sin ::trig)
 (derive ::cos ::trig)
 (derive ::tan ::trig)
@@ -30,6 +29,8 @@
 (derive ::cot ::trig)
 (derive ::x ::symbol)
 (derive ::exp ::unary)
+(derive ::power ::unary)
+(derive ::power ::numbered)
 
 (def complementary {::sin ::cos
                     ::tan ::cot
@@ -40,7 +41,13 @@
                  ::tan [::power [[::sec ::input] 2]]
                  ::cot [::mult -1 [::power [[::csc ::input] 2]]]
                  ::sec [::mult [[::sec ::input] [::tan ::input]]]
-                 ::csc [::mult -1 [::mult [[::csc ::input] [::cot ::input]]]]})
+                 ::csc [::mult -1 [::mult [[::csc ::input] [::cot ::input]]]]
+                 ::exp [::exp ::input]})
+
+(swap! skills (fn [sk] (into sk (keys identities))))
+(println skills)
+
+(doseq [n (keys identities)] (derive n ::ident))
 
 (assert (= (latex [::mult -1 [::sin ::x]]) "-\\sin(x)") "negative latex printing failed")
 
@@ -49,32 +56,27 @@
 (assert (= (distrinput [::sin ::input] ::x) [::sin ::x]))
 (assert (= (distrinput [::sin [::cos ::input]] ::x) [::sin [::cos ::x]]))
 
-(defmulti prime (fn [math] (if (vector? math) (first math) math)))
+(defn math-fn [math] (if (vector? math) (first math) math))
+
+(defmulti prime math-fn)
 (defmethod prime ::ident [func] (distrinput ((first func) identities) ::x))
 (defmethod prime ::add [func] [::add (prime (nth func 1)) (prime (nth func 2))])
 (defmethod prime ::x [func] 1)
+(defmethod prime :default [func] (println (str "Could not find derivative for " func)))
 
 (assert (= (prime [::sin ::x]) [::cos ::x]))
 (println (prime [::sin ::x]))
 (assert (= (prime [::add [::sin ::x] [::sin ::x]]) [::add [::cos ::x] [::cos ::x]]))
 (println (latex (prime [::add [::sin ::x] [::sin ::x]])))
 
-(declare additionProblem)
-
-(def addition
-  {:satisfies #{::add}
+(def derivation
+  {:satisfies #{}
    :facilitates skills
    :generate
-   (fn [include]
-     (let [problem (additionProblem include)]
+   (fn [problem]
+     (do (println problem)
       {:problem (str "Find \\(\\frac{dy}{dx}\\) for \\[y = " (latex problem) "\\]")
        :solution (str "\\[\\frac{dy}{dx} = " (latex (prime problem)) "\\]")}))})
-
-(defn additionProblem [include]
-  (let
-    [items (reduce (fn [stack item] (if (isa? item ::unary) (conj stack item) stack)) [] include)]
-    [::add [(first items) ::x] (if (= (count items) 2) [(last items) ::x] ::x)]))
-(println ((:generate addition) #{::sin ::cos}))
 
 (declare mathequals)
 
@@ -89,9 +91,4 @@
       (or (mathexact a b) (mathexact [(first a) (nth a 2) (nth a 1)] b))
       (mathexact a b))
     (mathexact a b)))
-
-(assert (mathequals (additionProblem #{ ::exp ::sin }) [::add [::exp ::x] [::sin ::x]]) "addition with exp failed")
-(assert (= (additionProblem #{ ::sin }) [::add [::sin ::x] ::x]) "addition with sin failed")
-(assert (= (additionProblem #{ ::tan }) [::add [::tan ::x] ::x]) "addition with tan failed")
-(assert (= (additionProblem #{ ::exp }) [::add [::exp ::x] ::x]) "addition with exp failed")
 
