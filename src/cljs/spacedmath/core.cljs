@@ -42,16 +42,16 @@
   [:section.section>div.container>div.content
    [:img {:src "/img/warning_clojure.png"}]])
 
-(def what ((:generate prb/derivation) [::prb/add [::prb/sin ::prb/x] [::prb/exp ::prb/x]]))
+(def what ((:generate prb/derivation) [::prb/mult [::prb/sin ::prb/x] [::prb/exp ::prb/x]]))
 
 (defn problems-page-fn []
   (do
     (. js/React useEffect (fn [] (. js/MathJax typeset)))
     [:section.flashcard>div.container>div.content
-     [:div
-      {:dangerouslySetInnerHTML {:__html (:problem what)}}]
-     [:div
-      {:dangerouslySetInnerHTML {:__html (:solution what)}}]]))
+     [:div (:problem what)]
+     [:div (:solution what)]
+     [:div "Skills: " (string/join ", " (map name (:skills what)))]]))
+
 
 (defn problems-page []
  [:f> problems-page-fn]) 

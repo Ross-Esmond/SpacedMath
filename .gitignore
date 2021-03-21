@@ -14,3 +14,7 @@ profiles.clj
 
 /node_modules
 /log
+
+.rebel_readline_history
+
+*.swp

@@ -58,11 +58,67 @@
 
 (defn math-fn [math] (if (vector? math) (first math) math))
 
+
 (defmulti prime math-fn)
 (defmethod prime ::ident [func] (distrinput ((first func) identities) ::x))
 (defmethod prime ::add [func] [::add (prime (nth func 1)) (prime (nth func 2))])
+(defmethod prime ::mult [func] [::add [::mult (nth func 1) (prime (nth func 2))] [::mult (prime (nth func 1)) (nth func 2)]])
 (defmethod prime ::x [func] 1)
 (defmethod prime :default [func] (println (str "Could not find derivative for " func)))
+
+
+
+(defmulti prime-step math-fn)
+(defmethod prime-step ::ident [func]
+  {:text "Use the identity to find"
+   :math (distrinput ((first func) identities) ::x)
+   :skills #{(first func)}})
+(defmethod prime-step ::add [func]
+  {:text "Distribute over addition"
+   :math [::add [::derive (nth func 1)] [::derive (nth func 2)]]
+   :skills #{::add}})
+(defmethod prime-step ::mult [func]
+  {:text "Apply the Product Rule"
+   :math [::add [::mult (nth func 1) [::derive (nth func 2)]] [::mult [::derive (nth func 1)] (nth func 2)]]
+   :skills #{::product}})
+   
+
+(println (prime-step [::sin ::x]))
+
+(defn find-derives [target]
+  (if-not (vector? target)
+    []
+    (cond
+      (= (first target) ::derive) [(nth target 1)]
+      (< (count target) 3) (find-derives (last target))
+      :else
+      (reduce
+        (fn [result item]
+          (if
+            (vector? item)
+            (into result (if (= (first item) ::derive) [(nth item 1)] (find-derives item)))
+            result))
+        []
+        (rest target)))))
+        
+(assert (= (find-derives [::add [::derive [::sin ::x]] [::derive [::cos ::x]]]) [[::sin ::x] [::cos ::x]]))
+        
+
+(defn prime-full [func]
+  (loop [items [func]
+         skills #{}]
+    (let [item (first items)
+          step (prime-step item)
+          items-new (into (rest items) (find-derives (:math step)))
+          skills-new (into skills (:skills step))]
+      (if
+        (empty? items-new) {:skills skills-new}
+        (recur items-new skills-new)))))
+
+(assert (= (prime-full [::sin ::x]) {:skills #{::sin}}))
+(println(prime-full [::add [::sin ::x] [::exp ::x]]))
+(assert (= (prime-full [::add [::sin ::x] [::exp ::x]]) {:skills #{::sin ::exp ::add}}))
+
 
 (assert (= (prime [::sin ::x]) [::cos ::x]))
 (println (prime [::sin ::x]))
@@ -76,7 +132,8 @@
    (fn [problem]
      (do (println problem)
       {:problem (str "Find \\(\\frac{dy}{dx}\\) for \\[y = " (latex problem) "\\]")
-       :solution (str "\\[\\frac{dy}{dx} = " (latex (prime problem)) "\\]")}))})
+       :solution (str "\\[\\frac{dy}{dx} = " (latex (prime problem)) "\\]")
+       :skills (:skills (prime-full problem))}))})
 
 (declare mathequals)
 
