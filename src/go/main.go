@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	http.Handle("/js/", http.FileServer(http.Dir("../../target/cljsbuild/public/")))
-	http.Handle("/", http.FileServer(http.Dir("../../static/")))
+	http.Handle("/js/", http.FileServer(http.Dir("resources/public/")))
+	http.Handle("/", http.FileServer(http.Dir("static/")))
 
 	log.Fatal(http.ListenAndServe(":3000", nil))
 }

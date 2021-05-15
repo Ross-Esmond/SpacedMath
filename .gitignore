@@ -18,3 +18,11 @@ profiles.clj
 .rebel_readline_history
 
 *.swp
+
+/out/
+/resources/public/js/compiled/
+/target/
+/*-init.clj
+/*.log
+/.shadow-cljs/
+
