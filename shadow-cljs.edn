@@ -6,6 +6,8 @@
  [[reagent "1.0.0"]
   [re-frame "1.2.0"]
 
+  [cider/cider-nrepl "0.26.0"]
+
   [binaryage/devtools "1.0.3"]]
 
  :dev-http
