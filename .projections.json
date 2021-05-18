@@ -1,0 +1,4 @@
+{
+  "src/cljs/*.cljs": {"alternate": "src/test/{}_test.cljs", "type": "source"},
+  "src/test/*_test.cljs": {"alternate": "src/cljs/{}.cljs", "type": "test"}
+}

@@ -4,6 +4,12 @@
           [goog.string.format]
           [clojure.string :as string]))
 
+(defn convert [target]
+  (cond
+    (vector? target) (vec (map convert target))
+    (number? target) target
+    :else (keyword "spacedmath.problems" (name target))))
+
 (defmulti latex (fn [thing] (cond (vector? thing) (first thing) (number? thing) ::number :else thing)))
 (defmethod latex ::exec [func] (str "\\" (name (first func)) "(" (latex (last func)) ")"))
 (defmethod latex ::symbol [sym] (name sym))
@@ -49,12 +55,7 @@
 
 (doseq [n (keys identities)] (derive n ::ident))
 
-(assert (= (latex [::mult -1 [::sin ::x]]) "-\\sin(x)") "negative latex printing failed")
-
 (defn distrinput [target input] (into [] (map (fn [item] (if (= item ::input) input (if (vector? item) (distrinput item input) item))) target)))
-
-(assert (= (distrinput [::sin ::input] ::x) [::sin ::x]))
-(assert (= (distrinput [::sin [::cos ::input]] ::x) [::sin [::cos ::x]]))
 
 (defn math-fn [math] (if (vector? math) (first math) math))
 
@@ -101,8 +102,6 @@
         []
         (rest target)))))
         
-(assert (= (find-derives [::add [::derive [::sin ::x]] [::derive [::cos ::x]]]) [[::sin ::x] [::cos ::x]]))
-        
 
 (defn prime-full [func]
   (loop [items [func]
@@ -115,15 +114,6 @@
         (empty? items-new) {:skills skills-new}
         (recur items-new skills-new)))))
 
-(assert (= (prime-full [::sin ::x]) {:skills #{::sin}}))
-(println(prime-full [::add [::sin ::x] [::exp ::x]]))
-(assert (= (prime-full [::add [::sin ::x] [::exp ::x]]) {:skills #{::sin ::exp ::add}}))
-
-
-(assert (= (prime [::sin ::x]) [::cos ::x]))
-(println (prime [::sin ::x]))
-(assert (= (prime [::add [::sin ::x] [::sin ::x]]) [::add [::cos ::x] [::cos ::x]]))
-(println (latex (prime [::add [::sin ::x] [::sin ::x]])))
 
 (def derivation
   {:satisfies #{}

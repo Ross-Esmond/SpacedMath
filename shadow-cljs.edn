@@ -1,6 +1,6 @@
 {:nrepl {:port 8777}
 
- :source-paths ["src"]
+ :source-paths ["src/cljs", "src/test"]
 
  :dependencies
  [[reagent "1.0.0"]
@@ -26,4 +26,9 @@
    :dev
    {:compiler-options
     {:closure-defines
-     { }}}}}}
+     {}}}}
+  :test
+  {:target    :browser-test
+   :test-dir  "out/node-tests"
+   :autorun   true
+   :devtools  {:http-port 8021 :http-root "out/node-tests"}}}}

@@ -6,7 +6,7 @@
     [reagent.core :as reagent]))
 
 
-    
+
 (defn main-panel []
   (reagent/create-class
     {:reagent-render (fn []
