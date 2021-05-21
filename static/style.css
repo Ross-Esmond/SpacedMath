@@ -1,0 +1,39 @@
+body {
+  background: #fdf6e3;
+  margin: 0px;
+  width: 100%;
+  font-size: 22px;
+}
+
+main {
+  width: 100%;
+  max-width: 750px;
+  padding: 5px 10px;
+  max-width: 750px;
+  box-sizing: border-box;
+  margin: auto;
+}
+
+header {
+  background: #998a66;
+  color: black;
+}
+
+header div {
+  width: 100%;
+  max-width: 750px;
+  margin: auto;
+  padding: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+#logout, #login {
+  outline: 3px solid black;
+  border: 0px none;
+  background: transparent;
+  padding: 5px;
+  margin-left: 10px;
+  float: right;
+  cursor: pointer;
+}

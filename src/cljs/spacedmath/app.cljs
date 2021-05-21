@@ -40,7 +40,7 @@
           [:header
             [:div
               (cond
-                (= @user false) [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))} "log in"]
+                (= @user false) [:div "\u202F" [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))} "log in"]]
                 (= @user nil) [:div "Checking login status..."]
                 :else [:div (.-name @user) [:button {:id "logout" :on-click (fn [] (. @auth0 logout #js {"returnTo" (. js/location -origin)}))} "log out"]])]]
           [:main "$" (pr/latex [::pr/exp ::pr/x]) "$"]])
