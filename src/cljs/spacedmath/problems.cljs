@@ -22,7 +22,7 @@
     (str "(" (latex (nth func 1)) ")(" (latex (nth func 2)) ")")))
 (defmethod latex :default [_] "Nothing")
 
-(def skills (atom #{ ::add ::power ::chain}))
+(def skills (atom #{::add ::power ::chain}))
 
 (derive ::add ::commutative)
 (derive ::trig ::unary)
