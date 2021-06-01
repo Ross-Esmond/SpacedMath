@@ -17,12 +17,16 @@
 (defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
 (defmethod latex ::number [number] (str number))
 (defmethod latex ::mult [func]
-  (if (= -1 (nth func 1))
-    (str "-" (latex (nth func 2)))
-    (str "(" (latex (nth func 1)) ")(" (latex (nth func 2)) ")")))
+  (cond
+    (= -1 (nth func 1)) (str "-" (latex (nth func 2)))
+    (number? (nth func 1)) (str (latex (nth func 1)) (latex (nth func 2)))
+    :else (str "(" (latex (nth func 1)) ")(" (latex (nth func 2)) ")")))
+(defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
+(defmethod latex ::derive [func] (str "\\frac{d}{dx}" (latex (nth func 1))))
+(defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
 (defmethod latex :default [_] "Nothing")
 
-(def skills (atom #{::add ::power ::chain}))
+(def skills (atom #{::add ::power ::chain ::const}))
 
 (derive ::add ::commutative)
 (derive ::trig ::unary)
@@ -34,6 +38,7 @@
 (derive ::csc ::trig)
 (derive ::cot ::trig)
 (derive ::x ::symbol)
+(derive ::y ::symbol)
 (derive ::exp ::unary)
 (derive ::power ::unary)
 (derive ::power ::numbered)
@@ -51,7 +56,6 @@
                  ::exp [::exp ::input]})
 
 (swap! skills (fn [sk] (into sk (keys identities))))
-(println skills)
 
 (doseq [n (keys identities)] (derive n ::ident))
 
@@ -60,13 +64,18 @@
 (defn math-fn [math] (if (vector? math) (first math) math))
 
 
+(defn numeric? [target] (number? target))
+
+
 (defmulti prime math-fn)
 (defmethod prime ::ident [func] (distrinput ((first func) identities) ::x))
 (defmethod prime ::add [func] [::add (prime (nth func 1)) (prime (nth func 2))])
 (defmethod prime ::mult [func] [::add [::mult (nth func 1) (prime (nth func 2))] [::mult (prime (nth func 1)) (nth func 2)]])
 (defmethod prime ::x [func] 1)
+(defmethod prime ::power [func] (cond
+                                  (isa? (nth func 1) ::symbol) [::mult (nth func 2) [::power ::x (- (nth func 2) 1)]]
+                                  (numeric? (nth func 1)) 0))
 (defmethod prime :default [func] (println (str "Could not find derivative for " func)))
-
 
 
 (defmulti prime-step math-fn)
@@ -75,16 +84,29 @@
    :math (distrinput ((first func) identities) ::x)
    :skills #{(first func)}})
 (defmethod prime-step ::add [func]
-  {:text "Distribute over addition"
-   :math [::add [::derive (nth func 1)] [::derive (nth func 2)]]
-   :skills #{::add}})
+  (let [math [::add [::derive (nth func 1)] [::derive (nth func 2)]]]
+    {:text (str
+             "Distribute over addition.\n$$\\frac{d}{dx}(" (latex func) ") = " (latex math) "$$")
+     :math math
+     :skills #{::add}}))
 (defmethod prime-step ::mult [func]
-  {:text "Apply the Product Rule"
-   :math [::add [::mult (nth func 1) [::derive (nth func 2)]] [::mult [::derive (nth func 1)] (nth func 2)]]
-   :skills #{::product}})
+  (let [math [::add [::mult (nth func 1) [::derive (nth func 2)]] [::mult [::derive (nth func 1)] (nth func 2)]]]
+    {:text (str "Apply the Product Rule.\n$$\\frac{d}{dx}" (latex func) " = " (latex math))
+     :math math
+     :skills #{::product}}))
+(defmethod prime-step ::power [func]
+  (cond
+    (isa? (nth func 1) ::symbol)
+    (let [math [::mult (nth func 2) [::power (nth func 1) (- (nth func 2) 1)]]]
+      {:text (str "Apply the Power Rule.\n$$\\frac{d}{dx}" (latex func) " = " (latex math) "$$")
+       :math math
+       :skills #{::power}})
+    (numeric? (nth func 1))
+    {:text (str "The expression $" (latex func) "$ is just a number, so its derivative is 0.")
+     :math 0
+     :skills #{::const}}))
+          
    
-
-(println (prime-step [::sin ::x]))
 
 (defn find-derives [target]
   (if-not (vector? target)
@@ -103,27 +125,36 @@
         (rest target)))))
         
 
-(defn prime-full [func]
-  (loop [items [func]
-         skills #{}]
-    (let [item (first items)
-          step (prime-step item)
-          items-new (into (rest items) (find-derives (:math step)))
-          skills-new (into skills (:skills step))]
-      (if
-        (empty? items-new) {:skills skills-new}
-        (recur items-new skills-new)))))
+(defn prime-dive [func]
+  (if (not (vector? func))
+    {:text []
+     :skills #{}
+     :answer func}
+    (if (= ::derive (nth func 0))
+      (let [step (prime-step (nth func 1))
+            dive (prime-dive (:math step))]
+        {:text (concat [(:text step)] (:text dive))
+         :skills (into (:skills step) (:skills dive))
+         :answer (:answer dive)})  
+      (reduce (fn [stack op]
+                (let [result (prime-dive op)]
+                  {:text (concat (:text stack) (:text result))
+                   :skills (into (:skills stack) (:skills result))
+                   :answer (conj (:answer stack) (:answer result))}))
+              {:text [] :skills #{} :answer [(first func)]}
+              (rest func)))))
 
+          
 
-(def derivation
-  {:satisfies #{}
-   :facilitates skills
-   :generate
-   (fn [problem]
-     (do (println problem)
-      {:problem (str "Find \\(\\frac{dy}{dx}\\) for \\[y = " (latex problem) "\\]")
-       :solution (str "\\[\\frac{dy}{dx} = " (latex (prime problem)) "\\]")
-       :skills (:skills (prime-full problem))}))})
+(defn basic-derivation [func]
+  (if (= (nth func 0) ::equal)
+    (let [derived (prime-dive [::derive (nth func 2)])]
+      {:problem (str "Differentiate the function\n$$" (latex func) "$$")
+       :steps (:text derived)
+       :skills (:skills derived)
+       :answer (str "$$" (latex [::equal [::derive (nth func 1)] (:answer derived)]) "$$")})
+    nil))
+
 
 (declare mathequals)
 

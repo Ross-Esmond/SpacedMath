@@ -32,6 +32,9 @@
         (reset! user (<p! (. @auth0 getUser)))))))
 
 
+(def math (pr/basic-derivation (pr/convert [:equal :y [:add [:power :x 5] [:power 5 6]]])))
+
+
 (defn main-panel []
   (reagent/create-class
     {:reagent-render
@@ -43,7 +46,10 @@
                 (= @user false) [:div "\u202F" [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))} "log in"]]
                 (= @user nil) [:div "Checking login status..."]
                 :else [:div (.-name @user) [:button {:id "logout" :on-click (fn [] (. @auth0 logout #js {"returnTo" (. js/location -origin)}))} "log out"]])]]
-          [:main "$" (pr/latex [::pr/exp ::pr/x]) "$"]])
+          [:main
+           (:problem math)
+           (:steps math)
+           (:answer math)]])
         
      :component-did-mount (fn [] (. js/MathJax typeset))}))
     
