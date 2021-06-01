@@ -1,6 +1,7 @@
 (ns spacedmath.app
   (:require
     [spacedmath.problems :as pr]
+    [spacedmath.list :as ls]
     [re-frame.core :as re-frame]
     [reagent.dom :as rdom]
     [reagent.core :as reagent]
@@ -32,7 +33,26 @@
         (reset! user (<p! (. @auth0 getUser)))))))
 
 
-(def math (pr/basic-derivation (pr/convert [:equal :y [:add [:power :x 5] [:power 5 6]]])))
+(def math (reagent/atom (pr/basic-derivation (pr/convert [:equal :y [:add [:power :x 5] [:power 5 6]]]))))
+
+(def selected (reagent/atom nil))
+
+(def target (atom nil))
+
+(defn card-build [] 
+  (do
+    (println @target)
+    (println @math)
+    (-> @target
+      (.-innerHTML)
+      (set! (str
+              "Skills: " (map #(name %) (:skills @math)) "<br /><br />"
+              (:problem @math)
+              (clojure.string/join " " (:steps @math))
+              (:answer @math))))
+    (. js/MathJax typeset)))
+
+(add-watch math nil card-build)
 
 
 (defn main-panel []
@@ -46,12 +66,17 @@
                 (= @user false) [:div "\u202F" [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))} "log in"]]
                 (= @user nil) [:div "Checking login status..."]
                 :else [:div (.-name @user) [:button {:id "logout" :on-click (fn [] (. @auth0 logout #js {"returnTo" (. js/location -origin)}))} "log out"]])]]
-          [:main
-           (:problem math)
-           (:steps math)
-           (:answer math)]])
-        
-     :component-did-mount (fn [] (. js/MathJax typeset))}))
+          [:main 
+           [:nav
+            (map
+              (fn [i n] [:div
+                         [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
+                         [:label (str "$" (pr/latex (pr/convert i)) "$")]])
+              ls/math-list (range))
+            [:button {:on-click (fn [] (reset! math (pr/basic-derivation (pr/convert [:equal :y (nth ls/math-list @selected)]))))}
+             "Update"]]
+           [:div {:class "card" :style {:margin "20px"} :ref (fn [el] (reset! target el))}]]])
+     :component-did-update card-build}))
     
   
 
