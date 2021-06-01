@@ -18,6 +18,7 @@ profiles.clj
 .rebel_readline_history
 
 *.swp
+*.swo
 
 /out/
 /resources/public/js/compiled/
