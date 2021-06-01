@@ -13,6 +13,7 @@
 (defmulti latex (fn [thing] (cond (vector? thing) (first thing) (number? thing) ::number :else thing)))
 (defmethod latex ::exec [func] (str "\\" (name (first func)) "(" (latex (last func)) ")"))
 (defmethod latex ::symbol [sym] (name sym))
+(defmethod latex ::named [sym] (str "\\" (name sym)))
 (defmethod latex ::add [func] (string/join "+" (map latex (rest func))))
 (defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
 (defmethod latex ::number [number] (str number))
@@ -55,9 +56,13 @@
                  ::csc [::mult -1 [::mult [[::csc ::input] [::cot ::input]]]]
                  ::exp [::exp ::input]})
 
+(def greek #{::pi})
+
 (swap! skills (fn [sk] (into sk (keys identities))))
 
 (doseq [n (keys identities)] (derive n ::ident))
+
+(doseq [n greek] (derive n ::named))
 
 (defn distrinput [target input] (into [] (map (fn [item] (if (= item ::input) input (if (vector? item) (distrinput item input) item))) target)))
 

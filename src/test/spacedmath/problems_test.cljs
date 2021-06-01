@@ -8,7 +8,8 @@
 
 (deftest latex
   (is (= (p/latex (convert [:mult -1 [:sin :x]])) "-\\sin(x)") "negative latex printing failed")
-  (is (= (p/latex (convert [:mult 3 :x])) "3x") "printing with a scaler multiple failed"))
+  (is (= (p/latex (convert [:mult 3 :x])) "3x") "printing with a scaler multiple failed")
+  (is (= (p/latex (convert :pi)) "\\pi") "printing pi failed"))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin ::p/input] ::p/x) [::p/sin ::p/x]))
