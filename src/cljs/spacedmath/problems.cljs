@@ -85,9 +85,15 @@
 
 (defmulti prime-step math-fn)
 (defmethod prime-step ::ident [func]
-  {:text "Use the identity to find"
-   :math (distrinput ((first func) identities) ::x)
-   :skills #{(first func)}})
+  (cond
+    (isa? (nth func 1) ::symbol)
+    {:text "Use the identity to find"
+     :math (distrinput ((first func) identities) ::x)
+     :skills #{(first func)}}
+    (numeric? (nth func 1))
+    {:text (str "The expression $" (latex func) "$ is just a number, so its derivative is 0.")
+     :math 0
+     :skills #{::const}}))
 (defmethod prime-step ::add [func]
   (let [math [::add [::derive (nth func 1)] [::derive (nth func 2)]]]
     {:text (str

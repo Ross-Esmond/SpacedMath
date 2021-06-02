@@ -26,4 +26,5 @@
 
 (deftest prime-dive
   (is (= (p/prime-dive [::p/exp ::p/x]) {:text [] :skills #{} :answer [::p/exp ::p/x]}))
-  (is (= (p/prime-dive [::p/derive [::p/exp ::p/x]]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp ::p/x]})))
+  (is (= (p/prime-dive [::p/derive [::p/exp ::p/x]]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp ::p/x]}))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5]])) #{::p/const})))
