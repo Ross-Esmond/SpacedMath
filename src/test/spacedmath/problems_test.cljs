@@ -9,7 +9,9 @@
 (deftest latex
   (is (= (p/latex (convert [:mult -1 [:sin :x]])) "-\\sin(x)") "negative latex printing failed")
   (is (= (p/latex (convert [:mult 3 :x])) "3x") "printing with a scaler multiple failed")
-  (is (= (p/latex (convert :pi)) "\\pi") "printing pi failed"))
+  (is (= (p/latex (convert :pi)) "\\pi") "printing pi failed")
+  (is (= (p/latex (convert [:mult 5 2])) "5(2)") "printing two scaler multiples failed")
+  (is (= (p/latex 5) "5")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin ::p/input] ::p/x) [::p/sin ::p/x]))
@@ -27,4 +29,7 @@
 (deftest prime-dive
   (is (= (p/prime-dive [::p/exp ::p/x]) {:text [] :skills #{} :answer [::p/exp ::p/x]}))
   (is (= (p/prime-dive [::p/derive [::p/exp ::p/x]]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp ::p/x]}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5]])) #{::p/const})))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5]])) #{::p/const}))
+  (is (= (:answer (p/prime-dive [::p/derive 5]) 0)))
+  (is (= (:answer (p/prime-dive [::p/derive ::p/x])) 1))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 ::p/x]])) #{::p/scaler})))

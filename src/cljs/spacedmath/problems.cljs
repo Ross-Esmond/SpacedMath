@@ -10,17 +10,27 @@
     (number? target) target
     :else (keyword "spacedmath.problems" (name target))))
 
-(defmulti latex (fn [thing] (cond (vector? thing) (first thing) (number? thing) ::number :else thing)))
+(defn numeric? [target] (number? target))
+
+(defn math-fn [math]
+  (cond
+    (vector? math) (first math)
+    (numeric? math) ::numeric
+    :else math))
+
+(defmulti latex math-fn)
 (defmethod latex ::exec [func] (str "\\" (name (first func)) "(" (latex (last func)) ")"))
 (defmethod latex ::symbol [sym] (name sym))
 (defmethod latex ::named [sym] (str "\\" (name sym)))
 (defmethod latex ::add [func] (string/join "+" (map latex (rest func))))
 (defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
-(defmethod latex ::number [number] (str number))
+(defmethod latex ::numeric [number] (str number))
 (defmethod latex ::mult [func]
   (cond
     (= -1 (nth func 1)) (str "-" (latex (nth func 2)))
-    (number? (nth func 1)) (str (latex (nth func 1)) (latex (nth func 2)))
+    (number? (nth func 1)) (str (latex (nth func 1)) (if
+                                                       (number? (nth func 2)) (str "(" (latex (nth func 2)) ")")
+                                                       (latex (nth func 2))))
     :else (str "(" (latex (nth func 1)) ")(" (latex (nth func 2)) ")")))
 (defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
 (defmethod latex ::derive [func] (str "\\frac{d}{dx}" (latex (nth func 1))))
@@ -66,10 +76,6 @@
 
 (defn distrinput [target input] (into [] (map (fn [item] (if (= item ::input) input (if (vector? item) (distrinput item input) item))) target)))
 
-(defn math-fn [math] (if (vector? math) (first math) math))
-
-
-(defn numeric? [target] (number? target))
 
 
 (defmulti prime math-fn)
@@ -84,6 +90,14 @@
 
 
 (defmulti prime-step math-fn)
+(defmethod prime-step ::numeric [func]
+  {:text (str "The expression $" (latex func) "$ is just a number, so its derivative is 0.")
+   :math 0
+   :skills #{::const}})
+(defmethod prime-step ::symbol [func]
+  {:text (str "The derivative of $" (latex func) "$ is just 1.\n")
+   :math 1
+   :skills #{}})
 (defmethod prime-step ::ident [func]
   (cond
     (isa? (nth func 1) ::symbol)
@@ -101,10 +115,17 @@
      :math math
      :skills #{::add}}))
 (defmethod prime-step ::mult [func]
-  (let [math [::add [::mult (nth func 1) [::derive (nth func 2)]] [::mult [::derive (nth func 1)] (nth func 2)]]]
-    {:text (str "Apply the Product Rule.\n$$\\frac{d}{dx}" (latex func) " = " (latex math))
-     :math math
-     :skills #{::product}}))
+  (cond
+    (numeric? (nth func 1))
+    (let [math [::mult (nth func 1) [::derive (nth func 2)]]]
+      {:text (str "Since $" (latex (nth func 1)) "$ is just a number, then$$" (latex [::equal [::derive func] math]) "$$")
+       :math math
+       :skills #{::scaler}})
+    :else
+    (let [math [::add [::mult (nth func 1) [::derive (nth func 2)]] [::mult [::derive (nth func 1)] (nth func 2)]]]
+      {:text (str "Apply the Product Rule.\n$$\\frac{d}{dx}" (latex func) " = " (latex math))
+       :math math
+       :skills #{::product}})))
 (defmethod prime-step ::power [func]
   (cond
     (isa? (nth func 1) ::symbol)
