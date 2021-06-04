@@ -15,6 +15,10 @@ main {
   display: flex;
 }
 
+nav {
+  min-width: 160px;
+}
+
 header {
   background: #998a66;
   color: black;

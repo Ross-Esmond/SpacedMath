@@ -6,7 +6,18 @@
     [reagent.dom :as rdom]
     [reagent.core :as reagent]
     [cljs.core.async :refer [go]]
-    [cljs.core.async.interop :refer-macros [<p!]]))
+    [cljs.core.async.interop :refer-macros [<p!]]
+    [clojure.set :refer [union]]))
+
+
+(def detailed-list (map #(pr/basic-derivation (pr/convert [:equal :y %])) ls/math-list))
+
+(def available-skills
+  (reduce
+    (fn [res item]
+      (union res (:skills item)))
+    #{}
+    detailed-list))
 
 
 (set! *warn-on-infer* false)
@@ -35,14 +46,15 @@
 
 (def math (reagent/atom (pr/basic-derivation (pr/convert [:equal :y [:add [:power :x 5] [:power 5 6]]]))))
 
+(def filters (reagent/atom #{}))
+(def active-filters (reagent/atom @filters))
+
 (def selected (reagent/atom nil))
 
 (def target (atom nil))
 
 (defn card-build [] 
   (do
-    (println @target)
-    (println @math)
     (-> @target
       (.-innerHTML)
       (set! (str
@@ -63,21 +75,45 @@
           [:header
             [:div
               (cond
-                (= @user false) [:div "\u202F" [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))} "log in"]]
+                (= @user false) [:div "\u202F"
+                                 [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))}
+                                  "log in"]]
                 (= @user nil) [:div "Checking login status..."]
-                :else [:div (.-name @user) [:button {:id "logout" :on-click (fn [] (. @auth0 logout #js {"returnTo" (. js/location -origin)}))} "log out"]])]]
+                :else [:div (.-name @user)
+                       [:button {:id "logout" :on-click (fn [] (. @auth0 logout #js {"returnTo" (. js/location -origin)}))}
+                        "log out"]])]]
           [:main 
            [:nav
-            (map
-              (fn [i n] [:div
-                         [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
-                         [:label (str "$" (pr/latex (pr/convert i)) "$")]])
-              ls/math-list (range))
-            [:button {:on-click (fn [] (reset! math (pr/basic-derivation (pr/convert [:equal :y (nth ls/math-list @selected)]))))}
+            (let [filt @filters]
+              (map
+                (fn [skill]
+                  [:div
+                   [:input {:type "checkbox"
+                            :on-change (fn [e] (if
+                                                 (-> e .-target .-checked)
+                                                 (swap! filters #(conj % skill))
+                                                 (swap! filters #(disj % skill)))) 
+                            :checked (skill filt)}]
+                   [:label (name skill)]])
+                available-skills)) 
+            [:button {:on-click (fn [] (reset! active-filters @filters))}
+             "Filter"]
+            (let [filt @active-filters]
+              (map
+                (fn [n] [:div
+                           [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
+                           [:label (str "$" (pr/latex (pr/convert (nth ls/math-list n))) "$")]])
+                (filter
+                  (fn [n]
+                    (let [t (nth detailed-list n)]
+                      (every? #(contains? (:skills t) %) filt)))
+                  (range (count ls/math-list)))))
+            [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert [:equal :y (nth ls/math-list @selected)])))))}
              "Update"]]
            [:div {:class "card" :style {:margin "20px"} :ref (fn [el] (reset! target el))}]]])
      :component-did-update card-build}))
     
+  
   
 
 (defn init []
