@@ -29,7 +29,8 @@
   (cond
     (= -1 (nth func 1)) (str "-" (latex (nth func 2)))
     (number? (nth func 1)) (str (latex (nth func 1)) (if
-                                                       (number? (nth func 2)) (str "(" (latex (nth func 2)) ")")
+                                                       (number? (nth func 2))
+                                                       (str "(" (latex (nth func 2)) ")")
                                                        (latex (nth func 2))))
     :else (str "(" (latex (nth func 1)) ")(" (latex (nth func 2)) ")")))
 (defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
@@ -74,18 +75,25 @@
 
 (doseq [n greek] (derive n ::named))
 
-(defn distrinput [target input] (into [] (map (fn [item] (if (= item ::input) input (if (vector? item) (distrinput item input) item))) target)))
+(defn distrinput [target input]
+  (into [] (map
+             (fn [item]
+               (if (= item ::input) input (if (vector? item) (distrinput item input) item)))
+             target)))
 
 
 
 (defmulti prime math-fn)
 (defmethod prime ::ident [func] (distrinput ((first func) identities) ::x))
 (defmethod prime ::add [func] [::add (prime (nth func 1)) (prime (nth func 2))])
-(defmethod prime ::mult [func] [::add [::mult (nth func 1) (prime (nth func 2))] [::mult (prime (nth func 1)) (nth func 2)]])
+(defmethod prime ::mult [func]
+  [::add [::mult (nth func 1) (prime (nth func 2))] [::mult (prime (nth func 1)) (nth func 2)]])
 (defmethod prime ::x [func] 1)
 (defmethod prime ::power [func] (cond
-                                  (isa? (nth func 1) ::symbol) [::mult (nth func 2) [::power ::x (- (nth func 2) 1)]]
-                                  (numeric? (nth func 1)) 0))
+                                  (isa? (nth func 1) ::symbol)
+                                  [::mult (nth func 2) [::power ::x (- (nth func 2) 1)]]
+                                  (numeric? (nth func 1))
+                                  0))
 (defmethod prime :default [func] (println (str "Could not find derivative for " func)))
 
 
@@ -118,11 +126,15 @@
   (cond
     (numeric? (nth func 1))
     (let [math [::mult (nth func 1) [::derive (nth func 2)]]]
-      {:text (str "Since $" (latex (nth func 1)) "$ is just a number, then$$" (latex [::equal [::derive func] math]) "$$")
+      {:text (str
+               "Since $" (latex (nth func 1)) "$ is just a number, then"
+               "$$" (latex [::equal [::derive func] math]) "$$")
        :math math
        :skills #{::scaler}})
     :else
-    (let [math [::add [::mult (nth func 1) [::derive (nth func 2)]] [::mult [::derive (nth func 1)] (nth func 2)]]]
+    (let [math [::add
+                [::mult (nth func 1) [::derive (nth func 2)]]
+                [::mult [::derive (nth func 1)] (nth func 2)]]]
       {:text (str "Apply the Product Rule.\n$$\\frac{d}{dx}" (latex func) " = " (latex math))
        :math math
        :skills #{::product}})))
