@@ -50,9 +50,11 @@
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
 (defmethod latex :default [_] "Nothing")
 
+
 (def skills (atom #{::add ::power ::chain ::const}))
 
 (derive ::add ::commutative)
+(derive ::mult ::commutative)
 (derive ::trig ::unary)
 (derive ::trig ::exec)
 (derive ::sin ::trig)
@@ -78,6 +80,31 @@
                  ::sec [::mult [[::sec ::input] [::tan ::input]]]
                  ::csc [::mult -1 [::mult [[::csc ::input] [::cot ::input]]]]
                  ::exp [::exp ::input]})
+
+(def non-operand
+  {::add [:any 0]
+   ::mult [:any 1]
+   ::div [2, 1]
+   ::power [2, 1]})
+
+(defn simplify [func]
+  (cond
+    (vector? func)
+    (let [[operator & operands] func
+           root (into [operator] (map simplify operands))]
+      (if (not (contains? non-operand operator)) root
+        (let [[target value] (operator non-operand)]
+          (if (= target :any)
+            (let [[operator & operands] root
+                  filtered (into [operator] (filter #(not (= % value)) operands))]
+              (cond
+                (= (count filtered) 1) value
+                (= (count filtered) 2) (last filtered)
+                :else filtered))
+            (if (= (nth root target) value)
+              (nth root 1)
+              root)))))
+    :else func))
 
 (def greek #{::pi})
 
@@ -185,7 +212,7 @@
             dive (prime-dive (:math step))]
         {:text (concat [(:text step)] (:text dive))
          :skills (into (:skills step) (:skills dive))
-         :answer (:answer dive)})  
+         :answer (simplify (:answer dive))})  
       (reduce (fn [stack op]
                 (let [result (prime-dive op)]
                   {:text (concat (:text stack) (:text result))

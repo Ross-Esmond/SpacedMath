@@ -39,8 +39,19 @@
   (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] ::p/x]])) #{::p/scaler}))
   (is (= (:skills (p/prime-dive [::p/derive [::p/add ::p/x ::p/x 5]])) #{::p/add ::p/const})))
 
-
 (deftest variance
   (is (= (p/variance 5 ::p/x) :none))
   (is (= (p/variance ::p/x ::p/x) :identity))
   (is (= (p/variance [::p/add 5 ::p/x] ::p/x) :function)))
+
+(deftest simplify
+  (is (= (p/simplify 5) 5))
+  (is (= (p/simplify [::p/add 5 0]) 5))
+  (is (= (p/simplify [::p/add 0 0]) 0))
+  (is (= (p/simplify [::p/mult 5 1]) 5))
+  (is (= (p/simplify [::p/mult 1 1]) 1))
+  (is (= (p/simplify [::p/mult 5 1 5]) [::p/mult 5 5]))
+  (is (= (p/simplify [::p/div 5 1]) 5))
+  (is (= (p/simplify [::p/power 5 1]) 5))
+  (is (= (p/simplify [::p/power [::p/mult 5 ::p/x] 1]) [::p/mult 5 ::p/x]))
+  (is (= (p/simplify [::p/power [::p/mult 1 ::p/x] 1]) ::p/x)))
