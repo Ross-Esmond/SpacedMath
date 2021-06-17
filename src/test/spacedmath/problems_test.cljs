@@ -7,11 +7,14 @@
   (is (= (convert [:mult -1 [:exp :x]]) [::p/mult -1 [::p/exp ::p/x]])))
 
 (deftest latex
-  (is (= (p/latex (convert [:mult -1 [:sin :x]])) "-\\sin(x)") "negative latex printing failed")
+  (is (= (p/latex (convert [:mult -1 [:sin :x]])) "-\\sin\\left(x\\right)")
+      "negative latex printing failed")
   (is (= (p/latex (convert [:mult 3 :x])) "3x") "printing with a scaler multiple failed")
   (is (= (p/latex (convert :pi)) "\\pi") "printing pi failed")
-  (is (= (p/latex (convert [:mult 5 2])) "5(2)") "printing two scaler multiples failed")
-  (is (= (p/latex 5) "5")))
+  (is (= (p/latex (convert [:mult 5 2])) "5\\left(2\\right)") "printing two scaler multiples failed")
+  (is (= (p/latex 5) "5"))
+  (is (= (p/latex (convert [:div 5 4])) "\\frac{5}{4}"))
+  (is (= (p/latex (convert :y)) "y")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin ::p/input] ::p/x) [::p/sin ::p/x]))
@@ -32,4 +35,12 @@
   (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5]])) #{::p/const}))
   (is (= (:answer (p/prime-dive [::p/derive 5]) 0)))
   (is (= (:answer (p/prime-dive [::p/derive ::p/x])) 1))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 ::p/x]])) #{::p/scaler})))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 ::p/x]])) #{::p/scaler}))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] ::p/x]])) #{::p/scaler}))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/add ::p/x ::p/x 5]])) #{::p/add ::p/const})))
+
+
+(deftest variance
+  (is (= (p/variance 5 ::p/x) :none))
+  (is (= (p/variance ::p/x ::p/x) :identity))
+  (is (= (p/variance [::p/add 5 ::p/x] ::p/x) :function)))
