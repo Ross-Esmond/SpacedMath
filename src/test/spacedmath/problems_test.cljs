@@ -31,18 +31,19 @@
 
 (deftest prime-dive
   (is (= (p/prime-dive [::p/exp ::p/x]) {:text [] :skills #{} :answer [::p/exp ::p/x]}))
-  (is (= (p/prime-dive [::p/derive [::p/exp ::p/x]]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp ::p/x]}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5]])) #{::p/const}))
-  (is (= (:answer (p/prime-dive [::p/derive 5]) 0)))
-  (is (= (:answer (p/prime-dive [::p/derive ::p/x])) 1))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 ::p/x]])) #{::p/scaler}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] ::p/x]])) #{::p/scaler}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/add ::p/x ::p/x 5]])) #{::p/add ::p/const})))
+  (is (= (p/prime-dive [::p/derive [::p/exp ::p/x] ::p/x]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp ::p/x]}))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5] ::p/x])) #{::p/const}))
+  (is (= (:answer (p/prime-dive [::p/derive 5 ::p/x]) 0)))
+  (is (= (:answer (p/prime-dive [::p/derive ::p/x ::p/x])) 1))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 ::p/x] ::p/x])) #{::p/scaler}))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] ::p/x] ::p/x])) #{::p/scaler}))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/add ::p/x ::p/x 5] ::p/x])) #{::p/add ::p/const})))
 
 (deftest variance
-  (is (= (p/variance 5 ::p/x) :none))
-  (is (= (p/variance ::p/x ::p/x) :identity))
-  (is (= (p/variance [::p/add 5 ::p/x] ::p/x) :function)))
+  (is (= (p/variance 5) #{}))
+  (is (= (p/variance ::p/x) #{::p/x}))
+  (is (= (p/variance (p/convert :t)) #{::p/t}))
+  (is (= (p/variance [::p/add 5 ::p/x]) #{::p/x})))
 
 (deftest simplify
   (is (= (p/simplify 5) 5))

@@ -5,4 +5,5 @@
     [:power 2 40]
     [:exp 5]
     [:add [:mult 5.2 :x] 2.3]
-    [:add [:mult [:div 7 4] [:power :x 2]] [:mult -3 :x] 12]])
+    [:add [:mult [:div 7 4] [:power :x 2]] [:mult -3 :x] 12]
+    [:add [:add [:mult 2 [:power :t 3]] [:mult -3 [:power :t 2]] [:mult -4 :t]]]])
