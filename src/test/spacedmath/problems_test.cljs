@@ -14,7 +14,8 @@
   (is (= (p/latex (convert [:mult 5 2])) "5\\left(2\\right)") "printing two scaler multiples failed")
   (is (= (p/latex 5) "5"))
   (is (= (p/latex (convert [:div 5 4])) "\\frac{5}{4}"))
-  (is (= (p/latex (convert :y)) "y")))
+  (is (= (p/latex (convert :y)) "y"))
+  (is (= (p/latex (convert [:mult 5 2 3])) "5\\left(2\\right)\\left(3\\right)")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin ::p/input] ::p/x) [::p/sin ::p/x]))
@@ -55,4 +56,6 @@
   (is (= (p/simplify [::p/div 5 1]) 5))
   (is (= (p/simplify [::p/power 5 1]) 5))
   (is (= (p/simplify [::p/power [::p/mult 5 ::p/x] 1]) [::p/mult 5 ::p/x]))
-  (is (= (p/simplify [::p/power [::p/mult 1 ::p/x] 1]) ::p/x)))
+  (is (= (p/simplify [::p/power [::p/mult 1 ::p/x] 1]) ::p/x))
+  (is (= (p/simplify [::p/mult [::p/mult 5 5] 5]) [::p/mult 5 5 5]))
+  (is (= (p/simplify [::p/add 2 [::p/add 3 4] 5]) [::p/add 2 3 4 5])))

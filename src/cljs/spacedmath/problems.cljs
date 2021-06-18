@@ -38,13 +38,19 @@
 (defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
 (defmethod latex ::numeric [number] (str number))
 (defmethod latex ::mult [func]
-  (cond
-    (= -1 (nth func 1)) (str "-" (latex (nth func 2)))
-    (number? (nth func 1)) (str (latex (nth func 1)) (if
-                                                       (number? (nth func 2))
-                                                       (parens (latex (nth func 2)))
-                                                       (latex (nth func 2))))
-    :else (str (latex (nth func 1)) (latex (nth func 2)))))
+  (string/join
+    (first
+      (reduce
+        (fn [[result prev] item]
+          [(into
+             result
+             (cond
+               (= -1 item) ["-"]
+               (and (number? item) (number? prev)) [(parens (latex item))]
+               :else [(latex item)]))
+           item])
+        [[] nil]
+        (rest func)))))
 (defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
 (defmethod latex ::derive [func] (str "\\frac{d}{dx}" (parens (latex (nth func 1)))))
 (defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
@@ -57,6 +63,8 @@
 
 (derive ::add ::commutative)
 (derive ::mult ::commutative)
+(derive ::add ::associative)
+(derive ::mult ::associative)
 (derive ::trig ::unary)
 (derive ::trig ::exec)
 (derive ::sin ::trig)
@@ -87,23 +95,42 @@
    ::div [2, 1]
    ::power [2, 1]})
 
+(defn remove-inconsequential-operators [root]
+  (if (not (contains? non-operand (first root))) root
+    (let [[target value] ((first root) non-operand)]
+      (if (= target :any)
+        (let [[operator & operands] root
+              filtered (into [operator] (filter #(not (= % value)) operands))]
+          (cond
+            (= (count filtered) 1) value
+            (= (count filtered) 2) (last filtered)
+            :else filtered))
+        (if (= (nth root target) value)
+          (nth root 1)
+          root)))))
+
+
+(defn combine-associative-operands [root]
+  (if (or (not (vector? root)) (not (isa? (first root) ::associative))) root
+    (do
+      (defn flat-out [[operator & operands]]
+        (reduce
+          (fn [stack op]
+            (into stack (if (and (vector? op) (= (first op) operator)) (rest op) [op])))
+          [operator]
+          (map
+            (fn [op] (if (and (vector? op) (= (first op) operator)) (flat-out op) op))
+            operands)))
+      (flat-out root))))
+
 (defn simplify [func]
   (cond
     (vector? func)
     (let [[operator & operands] func
            root (into [operator] (map simplify operands))]
-      (if (not (contains? non-operand operator)) root
-        (let [[target value] (operator non-operand)]
-          (if (= target :any)
-            (let [[operator & operands] root
-                  filtered (into [operator] (filter #(not (= % value)) operands))]
-              (cond
-                (= (count filtered) 1) value
-                (= (count filtered) 2) (last filtered)
-                :else filtered))
-            (if (= (nth root target) value)
-              (nth root 1)
-              root)))))
+      (-> root
+        (remove-inconsequential-operators)
+        (combine-associative-operands)))
     :else func))
 
 (def greek #{::pi})
