@@ -123,14 +123,35 @@
             operands)))
       (flat-out root))))
 
+(defn abs [n] (max n (- n)))
+
+(defn consolidate-negation [root]
+  (if (not (= (first root) ::mult)) root
+    (let [[normalized n]
+          (reduce
+            (fn [[stack n] item]
+              (cond
+                (number? item) [(conj stack (abs item)) (if (< item 0) (+ n 1) n)] 
+                :else [(conj stack item) n]))
+            [[::mult] 0]
+            (rest root))]
+      (if (even? n) normalized
+        (if (number? (nth normalized 1))
+          (into [::mult] (concat [(- (nth normalized 1))] (subvec normalized 2)))
+          (into [::mult -1] (rest normalized)))))))
+
+(consolidate-negation [::mult 3 -5])
+  
+
 (defn simplify [func]
   (cond
     (vector? func)
     (let [[operator & operands] func
            root (into [operator] (map simplify operands))]
       (-> root
-        (remove-inconsequential-operators)
-        (combine-associative-operands)))
+        combine-associative-operands
+        consolidate-negation
+        remove-inconsequential-operators))
     :else func))
 
 (def greek #{::pi})

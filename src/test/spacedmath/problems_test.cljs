@@ -58,4 +58,5 @@
   (is (= (p/simplify [::p/power [::p/mult 5 ::p/x] 1]) [::p/mult 5 ::p/x]))
   (is (= (p/simplify [::p/power [::p/mult 1 ::p/x] 1]) ::p/x))
   (is (= (p/simplify [::p/mult [::p/mult 5 5] 5]) [::p/mult 5 5 5]))
-  (is (= (p/simplify [::p/add 2 [::p/add 3 4] 5]) [::p/add 2 3 4 5])))
+  (is (= (p/simplify [::p/add 2 [::p/add 3 4] 5]) [::p/add 2 3 4 5]))
+  (is (= (p/simplify [::p/mult 5 -3]) [::p/mult -5 3])))
