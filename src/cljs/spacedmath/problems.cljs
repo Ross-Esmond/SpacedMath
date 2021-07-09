@@ -168,6 +168,43 @@
                (if (= item ::input) input (if (vector? item) (distrinput item input) item)))
              target)))
 
+(defn log [_] (do (println _) (.log js/console _) _))
+
+(defn gcd [a b]
+  (if (zero? b) a
+    (recur b (mod a b))))
+
+(defn reduce-div [div]
+  (if (not (= (first div) ::div)) div
+    (let [[_ div-num div-den] div
+          divisor (gcd div-num div-den)
+          frac [::div (/ div-num divisor) (/ div-den divisor)]]
+      (if (= (nth frac 2) 1) (nth frac 1) frac))))
+
+(defn get-frac [target]
+  (cond
+    (number? target) [::div target 1]
+    (= (first target) ::div) target
+    :else target))
+
+(defn crunch-numbers [target]
+  (let [frac-target (get-frac target)]
+    (into [::div]
+      (reduce
+        (fn [[top bot] current]
+          (cond
+            (number? current) [(* top current) bot]
+            (= (first current) ::div)
+            (let [[_ c-top c-bot] current]
+              [(* top c-top) (* bot c-bot)])
+            :else (throw (str current " not implemented yet"))))
+        [1 1]
+        (if (= (first frac-target) ::mult) (rest frac-target) [frac-target])))))
+
+(defn insta-add [a b]
+  (let [[_ a-num a-den] (get-frac (crunch-numbers a))
+        [_ b-num b-den] (get-frac (crunch-numbers b))]
+    (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)])))
 
 
 (defmulti prime math-fn)
@@ -226,7 +263,7 @@
        :math math
        :skills #{::product}})))
 (defmethod prime-step ::power [[_ func variable]]
-  (let [math [::mult (nth func 2) [::power (nth func 1) (- (nth func 2) 1)]]]
+  (let [math [::mult (nth func 2) [::power (nth func 1) (insta-add (nth func 2) -1)]]]
     {:text (str "Apply the Power Rule.\n$$" (latex [::equal [::derive func variable] math]) "$$")
      :math math
      :skills #{::power}}))

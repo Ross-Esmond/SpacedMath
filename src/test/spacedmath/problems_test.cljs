@@ -60,3 +60,15 @@
   (is (= (p/simplify [::p/mult [::p/mult 5 5] 5]) [::p/mult 5 5 5]))
   (is (= (p/simplify [::p/add 2 [::p/add 3 4] 5]) [::p/add 2 3 4 5]))
   (is (= (p/simplify [::p/mult 5 -3]) [::p/mult -5 3])))
+
+(deftest insta-add
+  (is (= (p/insta-add 2 3) 5))
+  (is (= (p/insta-add 2 -3) -1))
+  (is (= (p/insta-add [::p/div 4 3] [::p/div 1 3]) [::p/div 5 3]))
+  (is (= (p/insta-add [::p/div 4 3] 1) [::p/div 7 3]))
+  (is (= (p/insta-add [::p/div 4 3] -1) [::p/div 1 3]))
+  (is (= (p/insta-add [::p/div 1 2] [::p/div 1 2]) 1))
+  (is (= (p/insta-add [::p/mult -1 [::p/div 1 3]] [::p/div 2 3]) [::p/div 1 3])))
+
+(deftest crunch-numbers
+  (is (= (p/crunch-numbers [::p/mult -1 [::p/div 1 3]]) [::p/div -1 3])))
