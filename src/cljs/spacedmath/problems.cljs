@@ -139,8 +139,6 @@
         (if (number? (nth normalized 1))
           (into [::mult] (concat [(- (nth normalized 1))] (subvec normalized 2)))
           (into [::mult -1] (rest normalized)))))))
-
-(consolidate-negation [::mult 3 -5])
   
 
 (defn simplify [func]
