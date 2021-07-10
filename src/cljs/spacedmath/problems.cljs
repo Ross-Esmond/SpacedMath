@@ -8,15 +8,14 @@
   (cond
     (vector? target) (vec (map convert target))
     (number? target) target
+    (char? target) target
     :else
-    (let [word (keyword "spacedmath.problems" (name target))]
-      (if (= 1 (count (name target))) (derive word ::symbol))
-      word)))
+    (let [word (keyword "spacedmath.problems" (name target))] word)))
 
 (defn variance
   [func]
   (cond
-    (isa? func ::symbol) #{func}
+    (char? func) #{func}
     (vector? func) (reduce #(into %1 (variance %2)) #{} (rest func))
     :else #{}))
 
@@ -26,6 +25,7 @@
   (cond
     (vector? math) (first math)
     (numeric? math) ::numeric
+    (char? math) ::symbol
     :else math))
 
 (defn parens [& strings] (str "\\left(" (string/join strings) "\\right)"))
@@ -209,6 +209,7 @@
   (cond
     (not (contains? (variance math) variable)) ::numeric
     (vector? math) (first math)
+    (char? math) ::symbol
     :else math))
 
 (defmulti prime-step math-fn-type)
@@ -222,7 +223,7 @@
    :skills #{}})
 (defmethod prime-step ::ident [[_ func variable]]
   {:text "Use the identity to find"
-   :math (distrinput ((first func) identities) ::x)
+   :math (distrinput ((first func) identities) variable)
    :skills #{(first func)}})
 (defmethod prime-step ::add [[_ func variable]]
   (let [math (into [::add] (map (fn [_] [::derive _ variable]) (rest func)))]
