@@ -205,20 +205,6 @@
     (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)])))
 
 
-(defmulti prime math-fn)
-(defmethod prime ::ident [func] (distrinput ((first func) identities) ::x))
-(defmethod prime ::add [func] [::add (prime (nth func 1)) (prime (nth func 2))])
-(defmethod prime ::mult [func]
-  [::add [::mult (nth func 1) (prime (nth func 2))] [::mult (prime (nth func 1)) (nth func 2)]])
-(defmethod prime ::x [func] 1)
-(defmethod prime ::power [func] (cond
-                                  (isa? (nth func 1) ::symbol)
-                                  [::mult (nth func 2) [::power ::x (- (nth func 2) 1)]]
-                                  (numeric? (nth func 1))
-                                  0))
-(defmethod prime :default [func] (println (str "Could not find derivative for " func)))
-
-
 (defn math-fn-type [[_ math variable]]
   (cond
     (not (contains? (variance math) variable)) ::numeric
