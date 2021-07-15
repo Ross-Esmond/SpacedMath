@@ -10,8 +10,7 @@
     (vector? target) (vec (map convert target))
     (number? target) target
     (char? target) target
-    :else
-    (let [word (keyword "spacedmath.problems" (name target))] word)))
+    :else (keyword "spacedmath.problems" (name target))))
 
 (defn variance
   [func]
