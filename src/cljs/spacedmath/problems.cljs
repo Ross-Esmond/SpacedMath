@@ -52,7 +52,7 @@
         [[] nil]
         (rest func)))))
 (defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
-(defmethod latex ::derive [func] (str "\\frac{d}{dx}" (parens (latex (nth func 1)))))
+(defmethod latex ::derive [func] (str "\\frac{d}{d" (nth func 2) "}" (parens (latex (nth func 1)))))
 (defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
 (defmethod latex ::div [func]
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
@@ -298,7 +298,7 @@
       {:problem (str "Differentiate the function\n$$" (latex func) "$$")
        :steps (:text derived)
        :skills (:skills derived)
-       :answer (str "$$" (latex [::equal [::derive solution] (:answer derived)]) "$$")})
+       :answer (str "$$" (latex [::equal [::derive solution variable] (:answer derived)]) "$$")})
     nil))
 
 
