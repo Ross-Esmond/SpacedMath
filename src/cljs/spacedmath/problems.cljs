@@ -1,8 +1,9 @@
 (ns spacedmath.problems
-    (:require 
-          [goog.string :as gstring]
-          [goog.string.format]
-          [clojure.string :as string]))
+  (:require 
+    [goog.string :as gstring]
+    [goog.string.format]
+    [clojure.string :as string])
+  (:require-macros [utils :as ut]))
 
 (defn convert [target]
   (cond
@@ -165,8 +166,6 @@
              (fn [item]
                (if (= item ::input) input (if (vector? item) (distrinput item input) item)))
              target)))
-
-(defn log [_] (do (println _) (.log js/console _) _))
 
 (defn gcd [a b]
   (if (zero? b) a

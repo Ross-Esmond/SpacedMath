@@ -1,6 +1,6 @@
 {:nrepl {:port 8777}
 
- :source-paths ["src/cljs", "src/test"]
+ :source-paths ["src/cljs", "src/test", "src/clj"]
 
  :dependencies
  [[reagent "1.0.0"]

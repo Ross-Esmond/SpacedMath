@@ -7,7 +7,8 @@
     [reagent.core :as reagent]
     [cljs.core.async :refer [go]]
     [cljs.core.async.interop :refer-macros [<p!]]
-    [clojure.set :refer [union]]))
+    [clojure.set :refer [union]])
+  (:require-macros [utils :as ut]))
 
 
 (def detailed-list (map #(pr/basic-derivation (pr/convert [:equal \y %])) ls/math-list))
@@ -25,7 +26,6 @@
 
 (def auth0 (reagent/atom nil))
 (def user (reagent/atom nil))
-(def log (.-log js/console))
 
 
 (go
