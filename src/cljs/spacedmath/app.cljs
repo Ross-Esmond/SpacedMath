@@ -11,7 +11,7 @@
   (:require-macros [utils :as ut]))
 
 
-(def detailed-list (map #(pr/basic-derivation (pr/convert [:equal \y %])) ls/math-list))
+(def detailed-list (map #(pr/basic-derivation (pr/convert %)) ls/math-list))
 
 (def available-skills
   (reduce
@@ -108,7 +108,7 @@
                     (let [t (nth detailed-list n)]
                       (every? #(contains? (:skills t) %) filt)))
                   (range (count ls/math-list)))))
-            [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert [:equal \y (nth ls/math-list @selected)])))))}
+            [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth ls/math-list @selected))))))}
              "Update"]]
            [:div {:class "card" :style {:margin "20px"} :ref (fn [el] (reset! target el))}]]])
      :component-did-update card-build}))
