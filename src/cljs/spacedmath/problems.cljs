@@ -208,6 +208,13 @@
         [_ b-num b-den] (get-frac (crunch-numbers b))]
     (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)])))
 
+(defn insta-invert [a]
+  (if (not (vector? a)) [::power a -1]
+    (let [[func & remainder] a]
+      (if (= func ::power)
+        [::power (first remainder) (- (last remainder))]
+        [::power a -1]))))
+
 
 (defn math-fn-type [[_ math variable]]
   (cond
@@ -256,6 +263,18 @@
     {:text (str "Apply the Power Rule.\n$$" (latex [::equal [::derive func variable] math]) "$$")
      :math math
      :skills #{::power}}))
+(defmethod prime-step ::div [[_ [_ numer denom] variable]]
+  (cond
+    (contains? (variance denom) variable)
+    (let [math [::mult numer (insta-invert denom)]]
+      {:text (str "Invert the denominator."
+                  "$$" (latex [::equal [::div numer denom] math]) "$$")
+       :math [::derive math variable]
+       :skills #{}})))
+(defmethod prime-step :default [[_ func variable]]
+  {:text (str (name (first func)) " not supported")
+   :math 0
+   :skills #{}})
           
    
 
