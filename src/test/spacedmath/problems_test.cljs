@@ -15,7 +15,9 @@
   (is (= (p/latex 5) "5"))
   (is (= (p/latex (convert [:div 5 4])) "\\frac{5}{4}"))
   (is (= (p/latex (convert \y)) "y"))
-  (is (= (p/latex (convert [:mult 5 2 3])) "5\\left(2\\right)\\left(3\\right)")))
+  (is (= (p/latex (convert [:mult 5 2 3])) "5\\left(2\\right)\\left(3\\right)"))
+  (is (= (p/latex (convert [:fn \f \x])) "f\\left(x\\right)"))
+  (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'\\left(x\\right)")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin ::p/input] \x) [::p/sin \x]))
@@ -33,7 +35,8 @@
   (is (= (:answer (p/prime-dive [::p/derive \x \x])) 1))
   (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 \x] \x])) #{::p/scaler}))
   (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] \x] \x])) #{::p/scaler}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const})))
+  (is (= (:skills (p/prime-dive [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const}))
+  (is (= (:answer (p/prime-dive [::p/derive [::p/mult \c \x] \x])) \c)))
 
 (deftest variance
   (is (= (p/variance 5) #{}))

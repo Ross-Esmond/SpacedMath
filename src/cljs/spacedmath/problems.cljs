@@ -52,10 +52,16 @@
         [[] nil]
         (rest func)))))
 (defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
-(defmethod latex ::derive [func] (str "\\frac{d}{d" (nth func 2) "}" (parens (latex (nth func 1)))))
+(defmethod latex ::derive [func]
+  (let [[_ eq target] func]
+    (if (and (vector? eq) (= (first eq) ::fn))
+      (let [[_ ident variable] eq]
+        (str ident "'" (parens variable)))
+      (str "\\frac{d}{d" (nth func 2) "}" (parens (latex (nth func 1)))))))
 (defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
 (defmethod latex ::div [func]
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
+(defmethod latex ::fn [func] (let [[_ ident variable] func] (str ident (parens variable))))
 (defmethod latex :default [_] "Nothing")
 
 
@@ -231,7 +237,7 @@
      :skills #{::add}}))
 (defmethod prime-step ::mult [[_ func variable]]
   (cond
-    (= (variance (nth func 1)) #{})
+    (not (contains? (variance (nth func 1)) variable))
     (let [math [::mult (nth func 1) [::derive (nth func 2) variable]]]
       {:text (str
                "Since $" (latex (nth func 1)) "$ is just a number, then"
@@ -293,7 +299,7 @@
 (defn basic-derivation [func]
   (if (= (nth func 0) ::equal)
     (let [[_ solution equation] func
-          variable (first (variance equation))
+          variable (if (and (vector? solution) (= (first solution) ::fn)) (last solution) (first (variance equation)))
           derived (prime-dive [::derive equation variable])]
       {:problem (str "Differentiate the function\n$$" (latex func) "$$")
        :steps (:text derived)
