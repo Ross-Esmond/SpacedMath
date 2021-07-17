@@ -12,4 +12,5 @@
     [:equal [:fn \g \t] [:mult 2 [:power \t [:mult -1 [:div 3 4]]]]]
     [:equal [:fn \f \y] [:mult \c [:power \y -6]]]
     [:equal [:fn \F \r] [:div 5 [:power \r 3]]]
-    [:equal \y [:add [:power \x [:div 5 3]] [:mult -1 [:power \x [:div 2 3]]]]]])
+    [:equal \y [:add [:power \x [:div 5 3]] [:mult -1 [:power \x [:div 2 3]]]]]
+    [:equal [:fn \h \t] [:add [:root \t 4] [:mult -4 [:exp \t]]]]])

@@ -61,7 +61,8 @@
 (defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
 (defmethod latex ::div [func]
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
-(defmethod latex ::fn [func] (let [[_ ident variable] func] (str ident (parens variable))))
+(defmethod latex ::fn [[_ ident variable]] (str ident (parens variable)))
+(defmethod latex ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
 (defmethod latex :default [_] "Nothing")
 
 
@@ -215,6 +216,10 @@
         [::power (first remainder) (- (last remainder))]
         [::power a -1]))))
 
+(defn insta-flip [a]
+  (let [[_ numer denom] (get-frac a)]
+    [::div denom numer]))
+
 
 (defn math-fn-type [[_ math variable]]
   (cond
@@ -271,8 +276,13 @@
                   "$$" (latex [::equal [::div numer denom] math]) "$$")
        :math [::derive math variable]
        :skills #{}})))
+(defmethod prime-step ::root [[_ [_ target root] variable]]
+  (let [math [::power target (insta-flip root)]]
+    {:text (str "Convert the root to an exponent.$$" (latex [::equal [::root target root] math]) "$$")
+     :math [::derive math variable]
+     :skills #{}}))
 (defmethod prime-step :default [[_ func variable]]
-  {:text (str (name (first func)) " not supported")
+  {:text (str "Structure " (name (first func)) " not supported.")
    :math 0
    :skills #{}})
           
