@@ -209,16 +209,17 @@
         [_ b-num b-den] (get-frac (crunch-numbers b))]
     (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)])))
 
-(defn insta-invert [a]
-  (if (not (vector? a)) [::power a -1]
-    (let [[func & remainder] a]
-      (if (= func ::power)
-        [::power (first remainder) (- (last remainder))]
-        [::power a -1]))))
-
 (defn insta-flip [a]
   (let [[_ numer denom] (get-frac a)]
     [::div denom numer]))
+
+(defn insta-invert [a]
+  (if (not (vector? a)) [::power a -1]
+    (let [[func & remainder] a]
+      (cond
+        (= func ::power) [::power (first remainder) (- (last remainder))]
+        (= func ::root) [::power (first remainder) [::mult -1 (insta-flip (last remainder))]]
+        :else [::power a -1]))))
 
 
 (defn math-fn-type [[_ math variable]]
