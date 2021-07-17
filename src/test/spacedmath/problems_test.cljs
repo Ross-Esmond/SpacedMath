@@ -28,8 +28,12 @@
 
 (deftest prime-dive
   (is (= (p/prime-dive [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
-  (is (= (p/prime-dive [::p/derive [::p/exp \x] \x]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp \x]}))
-  (is (= (p/prime-dive [::p/derive [::p/exp \t] \t]) {:text ["Use the identity to find"] :skills #{::p/exp} :answer [::p/exp \t]}))
+  (is (=
+       (p/prime-dive [::p/derive [::p/exp \x] \x])
+       {:text ["Use the identity to find$$\\frac{d}{dx}\\left(e^{x}\\right) = e^{x}$$"] :skills #{::p/exp} :answer [::p/exp \x]}))
+  (is (=
+       (p/prime-dive [::p/derive [::p/exp \t] \t])
+       {:text ["Use the identity to find$$\\frac{d}{dt}\\left(e^{t}\\right) = e^{t}$$"] :skills #{::p/exp} :answer [::p/exp \t]}))
   (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5] \x])) #{::p/const}))
   (is (= (:answer (p/prime-dive [::p/derive 5 \x]) 0)))
   (is (= (:answer (p/prime-dive [::p/derive \x \x])) 1))
