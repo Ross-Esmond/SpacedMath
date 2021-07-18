@@ -10,7 +10,7 @@
   (is (= (p/latex (convert [:mult -1 [:sin \x]]) "-\\sin\\left(x\\right)"))
       "negative latex printing failed")
   (is (= (p/latex (convert [:mult 3 \x])) "3x") "printing with a scaler multiple failed")
-  (is (= (p/latex (convert :pi)) "\\pi") "printing pi failed")
+  (is (= (p/latex (convert :pi)) "\\pi ") "printing pi failed")
   (is (= (p/latex (convert [:mult 5 2])) "5\\left(2\\right)") "printing two scaler multiples failed")
   (is (= (p/latex 5) "5"))
   (is (= (p/latex (convert [:div 5 4])) "\\frac{5}{4}"))

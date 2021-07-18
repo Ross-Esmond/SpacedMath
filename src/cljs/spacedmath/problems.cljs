@@ -33,7 +33,7 @@
 (defmulti latex math-fn)
 (defmethod latex ::exec [func] (str "\\" (name (first func)) (parens (latex (last func)))))
 (defmethod latex ::symbol [sym] (name sym))
-(defmethod latex ::named [sym] (str "\\" (name sym)))
+(defmethod latex ::named [sym] (str "\\" (str (name sym) " ")))
 (defmethod latex ::add [func] (string/join "+" (map latex (rest func))))
 (defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
 (defmethod latex ::numeric [number] (str number))
