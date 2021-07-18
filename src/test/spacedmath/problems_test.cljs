@@ -41,7 +41,8 @@
   (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] \x] \x])) #{::p/scaler}))
   (is (= (:skills (p/prime-dive [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const}))
   (is (= (:answer (p/prime-dive [::p/derive [::p/mult \c \x] \x])) \c))
-  (is (= (:answer (p/prime-dive [::p/derive [::p/div 5 [::p/power \x 4] \x] \x])) [::p/mult -5 4 [::p/power \x -5]])))
+  (is (= (:answer (p/prime-dive [::p/derive [::p/div 5 [::p/power \x 4] \x] \x])) [::p/mult -5 4 [::p/power \x -5]]))
+  (is (= (:answer (p/prime-dive [::p/derive [::p/exp [::p/add \x 1]] \x]) [::p/exp [::p/add \x 1]]))))
 
 (deftest variance
   (is (= (p/variance 5) #{}))

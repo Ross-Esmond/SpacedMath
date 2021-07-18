@@ -248,7 +248,7 @@
    :math 1
    :skills #{}})
 (defmethod prime-step ::ident [[_ func variable]]
-  (let [math (distrinput ((first func) identities) variable)]
+  (let [math (distrinput ((first func) identities) (last func))]
     {:text (str "Use the identity to find$$" (latex [::equal [::derive func variable] math]) "$$")
      :math math
      :skills #{(first func)}}))
