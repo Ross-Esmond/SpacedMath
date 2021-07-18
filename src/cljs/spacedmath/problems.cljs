@@ -214,7 +214,9 @@
           [_ b-num b-den] (get-frac (crunch-numbers b))]
       (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)]))
     (and (number? a) (number? b))
-    (+ a b)))
+    (+ a b)
+    :else
+    [::add a b]))
 
 (defn insta-flip [a]
   (let [[_ numer denom] (get-frac a)]
