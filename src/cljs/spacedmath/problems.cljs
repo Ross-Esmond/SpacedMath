@@ -250,21 +250,23 @@
      :math math
      :skills #{::add}}))
 (defmethod prime-step ::mult [[_ func variable]]
-  (cond
-    (not (contains? (variance (nth func 1)) variable))
-    (let [math [::mult (nth func 1) [::derive (nth func 2) variable]]]
-      {:text (str
-               "Since $" (latex (nth func 1)) "$ is just a number, then"
-               "$$" (latex [::equal [::derive func variable] math]) "$$")
-       :math math
-       :skills #{::scaler}})
-    :else
-    (let [math [::add
-                [::mult (nth func 1) [::derive (nth func 2) variable]]
-                [::mult [::derive (nth func 1) variable] (nth func 2)]]]
-      {:text (str "Apply the Product Rule.$$" (latex [::equal [::derive func variable] math]) "$$")
-       :math math
-       :skills #{::product}})))
+  (let [f-stat (group-by #(if (contains? (variance %) variable) \t \f) (rest func))]
+    (cond
+      (= 1 (count (get f-stat \t)))
+      (let [nums (into [::mult] (get f-stat \f))
+            math (conj nums [::derive (first (get f-stat \t)) variable])]
+        {:text (str
+                 "Since $" (latex nums) "$ is just a number, then"
+                 "$$" (latex [::equal [::derive func variable] math]) "$$")
+         :math math
+         :skills #{::scaler}})
+      (= 2 (count (get f-stat \t)))
+      (let [math [::add
+                  [::mult (first (get f-stat \t)) [::derive (last (get f-stat \t)) variable]]
+                  [::mult [::derive (first (get f-stat \t)) variable] (last (get f-stat \t))]]]
+        {:text (str "Apply the Product Rule.$$" (latex [::equal [::derive func variable] math]) "$$")
+         :math math
+         :skills #{::product}}))))
 (defmethod prime-step ::power [[_ func variable]]
   (let [math [::mult (nth func 2) [::power (nth func 1) (insta-add (nth func 2) -1)]]]
     {:text (str "Apply the Power Rule.\n$$" (latex [::equal [::derive func variable] math]) "$$")

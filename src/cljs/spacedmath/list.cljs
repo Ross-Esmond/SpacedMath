@@ -15,4 +15,5 @@
     [:equal \y [:add [:power \x [:div 5 3]] [:mult -1 [:power \x [:div 2 3]]]]]
     [:equal [:fn \h \t] [:add [:root \t 4] [:mult -4 [:exp \t]]]]
     [:equal [:fn \S \p] [:add [:root \p 2] [:mult -1 \p]]]
-    [:equal \y [:add [:mult 3 [:exp \x]] [:div 4 [:root \x 3]]]]])
+    [:equal \y [:add [:mult 3 [:exp \x]] [:div 4 [:root \x 3]]]]
+    [:equal [:fn \S \R] [:mult 4 :pi [:power \R 2]]]])
