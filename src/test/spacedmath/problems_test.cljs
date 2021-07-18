@@ -16,8 +16,8 @@
   (is (= (p/latex (convert [:div 5 4])) "\\frac{5}{4}"))
   (is (= (p/latex (convert \y)) "y"))
   (is (= (p/latex (convert [:mult 5 2 3])) "5\\left(2\\right)\\left(3\\right)"))
-  (is (= (p/latex (convert [:fn \f \x])) "f\\left(x\\right)"))
-  (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'\\left(x\\right)")))
+  (is (= (p/latex (convert [:fn \f \x])) "f(x)"))
+  (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'(x)")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin ::p/input] \x) [::p/sin \x]))
