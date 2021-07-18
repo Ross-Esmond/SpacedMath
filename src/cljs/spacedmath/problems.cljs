@@ -56,12 +56,12 @@
   (let [[_ eq target] func]
     (if (and (vector? eq) (= (first eq) ::fn))
       (let [[_ ident variable] eq]
-        (str ident "'" (parens variable)))
+        (str ident "'(" variable ")"))
       (str "\\frac{d}{d" (nth func 2) "}" (parens (latex (nth func 1)))))))
 (defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
 (defmethod latex ::div [func]
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
-(defmethod latex ::fn [[_ ident variable]] (str ident (parens variable)))
+(defmethod latex ::fn [[_ ident variable]] (str ident \( variable \)))
 (defmethod latex ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
 (defmethod latex :default [_] "Nothing")
 
