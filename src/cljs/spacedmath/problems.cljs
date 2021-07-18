@@ -173,6 +173,9 @@
                (if (= item ::input) input (if (vector? item) (distrinput item input) item)))
              target)))
 
+(defn is-math? [target math]
+  (and (vector? target) (= math (first target))))
+
 (defn gcd [a b]
   (if (zero? b) a
     (recur b (mod a b))))
@@ -205,9 +208,13 @@
         (if (= (first frac-target) ::mult) (rest frac-target) [frac-target])))))
 
 (defn insta-add [a b]
-  (let [[_ a-num a-den] (get-frac (crunch-numbers a))
-        [_ b-num b-den] (get-frac (crunch-numbers b))]
-    (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)])))
+  (cond
+    (or (is-math? a ::div) (is-math? b ::div))
+    (let [[_ a-num a-den] (get-frac (crunch-numbers a))
+          [_ b-num b-den] (get-frac (crunch-numbers b))]
+      (reduce-div [::div (+ (* a-num b-den) (* b-num a-den)) (* a-den b-den)]))
+    (and (number? a) (number? b))
+    (+ a b)))
 
 (defn insta-flip [a]
   (let [[_ numer denom] (get-frac a)]

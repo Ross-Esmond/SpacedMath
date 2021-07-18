@@ -16,4 +16,6 @@
     [:equal [:fn \h \t] [:add [:root \t 4] [:mult -4 [:exp \t]]]]
     [:equal [:fn \S \p] [:add [:root \p 2] [:mult -1 \p]]]
     [:equal \y [:add [:mult 3 [:exp \x]] [:div 4 [:root \x 3]]]]
-    [:equal [:fn \S \R] [:mult 4 :pi [:power \R 2]]]])
+    [:equal [:fn \S \R] [:mult 4 :pi [:power \R 2]]]
+    [:equal [:fn \h \u] [:add [:mult \A [:power \u 3]] [:mult \B [:power \u 2]] [:mult \C \u]]]
+    [:equal [:fn \j \x] [:add [:power \x 2.4] [:exp 2.4]]]])
