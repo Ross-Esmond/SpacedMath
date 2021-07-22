@@ -8,7 +8,9 @@
 
   [cider/cider-nrepl "0.26.0"]
 
-  [binaryage/devtools "1.0.3"]]
+  [binaryage/devtools "1.0.3"]
+
+  [cljs-http "0.1.39"]]
 
  :dev-http
  {8280 "resources/public"

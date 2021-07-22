@@ -7,8 +7,11 @@
     [reagent.core :as reagent]
     [cljs.core.async :refer [go]]
     [cljs.core.async.interop :refer-macros [<p!]]
-    [clojure.set :refer [union]])
-  (:require-macros [utils :as ut]))
+    [clojure.set :refer [union]]
+    [cljs-http.client :as http]
+    [cljs.core.async :refer [<!]])
+  (:require-macros
+    [utils :as ut]))
 
 
 (def detailed-list (map #(pr/basic-derivation (pr/convert %)) ls/math-list))
@@ -24,25 +27,14 @@
 (set! *warn-on-infer* false)
 
 
-(def auth0 (reagent/atom nil))
 (def user (reagent/atom nil))
 
+(go (let [response (<! (http/get "/api/profile"))]
+      (reset! user (:body response))))
 
-(go
-  (let [client (<p! (js/createAuth0Client #js {"domain" "spacedmath.us.auth0.com" "client_id" "RIlgkboudsnnS6LDxnzZdmcV3K6WnKct"}))
-        auth_state (<p! (. client isAuthenticated))]
-    (do
-      (reset! auth0 client)
-      (if (not auth_state)
-        (let [query (.. js/window -location -search)]
-          (if (and (. query includes "code=") (. query includes "state="))
-            (do
-              (<p! (. @auth0 handleRedirectCallback))
-              (. (. js/window -history) replaceState #js {} (. js/document -title) "/")
-              (reset! user (<p! (. @auth0 getUser))))
-            (reset! user false)))
-        (reset! user (<p! (. @auth0 getUser)))))))
-
+(defn logout []
+  (go (let [response (<! (http/get "/api/logout"))]
+        (reset! user ""))))
 
 (def math (reagent/atom (pr/basic-derivation (pr/convert [:equal \y [:add [:power \x 5] [:power 5 6]]]))))
 
@@ -75,13 +67,11 @@
           [:header
             [:div
               (cond
-                (= @user false) [:div "\u202F"
-                                 [:button {:id "login" :on-click (fn [] (. @auth0 loginWithRedirect #js {"redirect_uri" "http://localhost:3000/"}))}
-                                  "log in"]]
+                (= @user "") [:div "\u202F"
+                                           [:a {:id "login" :href "/api/auth/google"} "log in"]]
                 (= @user nil) [:div "Checking login status..."]
-                :else [:div (.-name @user)
-                       [:button {:id "logout" :on-click (fn [] (. @auth0 logout #js {"returnTo" (. js/location -origin)}))}
-                        "log out"]])]]
+                :else [:div @user
+                       [:span {:id "logout" :on-click #(logout)} "log out"]])]]
           [:main 
            [:nav
             (let [filt @filters]

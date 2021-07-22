@@ -27,3 +27,4 @@ profiles.clj
 /*.log
 /.shadow-cljs/
 
+run.sh
