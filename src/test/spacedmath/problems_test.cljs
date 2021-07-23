@@ -20,12 +20,9 @@
   (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'(x)")))
 
 (deftest distrinput
-  (is (= (p/distrinput [::p/sin ::p/input] \x) [::p/sin \x]))
-  (is (= (p/distrinput [::p/sin [::p/cos ::p/input]] \x) [::p/sin [::p/cos \x]])))
+  (is (= (p/distrinput [::p/sin \x] \t) [::p/sin \t]))
+  (is (= (p/distrinput [::p/sin [::p/cos \x]] \t) [::p/sin [::p/cos \t]])))
         
-(deftest find-derives
-  (is (= (p/find-derives [::p/add [::p/derive [::p/sin \x]] [::p/derive [::p/cos \x]]]) [[::p/sin \x] [::p/cos \x]])))
-
 (deftest prime-dive
   (is (= (p/prime-dive [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
   (is (=
@@ -76,3 +73,26 @@
 
 (deftest crunch-numbers
   (is (= (p/crunch-numbers [::p/mult -1 [::p/div 1 3]]) [::p/div -1 3])))
+
+(deftest math-match
+  (is (= (p/math-match \t \x) {\x \t}))
+  (is (= (p/math-match ::p/sin ::p/sin) {}))
+  (is (= (p/math-match [::p/sin \u] \x) {\x [::p/sin \u]}))
+  (is (= (p/math-match [::p/sin \u] [::p/sin \x]) {\x \u}))
+  (is (= (p/math-match [::p/tan \u] [::p/sin \x]) nil))
+  (is (= (p/math-match [::p/tan [::p/sin \u]] [::p/tan [::p/sin \x]]) {\x \u}))
+  (is (= (p/math-match [::p/mult [::p/sin \u] [::p/tan \v]] [::p/mult [::p/sin \x] [::p/tan \x]]) nil))
+  (is (= (p/math-match [::p/sin \u] [\f \x]) {\f ::p/sin \x \u}))
+  (is (= (p/math-match [::p/derive [::p/sin \v] \u] [::p/derive [::p/sin \x] \x]) nil))
+  (is (= (p/math-match [::p/derive [::p/sin \u] \u] [::p/derive [::p/sin \x] \x]) {\x \u}))
+  (is (= (p/math-match [::p/derive [::p/mult \a \u] \u] [::p/derive [::p/mult \c \x] \x]) {\c \a \x \u}))
+  (is (= (p/math-match [::p/derive [::p/mult [::p/sin \d] \u] \u] [::p/derive [::p/mult \c \x] \x]) {\c [::p/sin \d] \x \u}))
+  (is (= (p/math-match [::p/derive [::p/mult [::p/sin \u] \u] \u] [::p/derive [::p/mult \c \x] \x]) nil))
+  (is (= (p/math-match [::p/sin [::p/tan \u]] [\f [\f \x]]) nil))
+  (is (= (p/math-match [::p/mult [::p/sin \u] [::p/tan \u]] [::p/mult [\g \x] [\f \x]]) {\g ::p/sin \f ::p/tan \x \u}))
+  (is (= (p/math-match [::p/mult \u \v] [::p/mult \x \x]) nil))
+  (is (= (p/math-match [::p/mult \u \u] [::p/mult \x \y]) nil)))
+
+(deftest prime-pattern
+  (doseq [rule @p/rules]
+    (is (= (p/prime-pattern (:match rule)) {:text (:text rule) :skills (:skills rule) :answer (:result rule)}))))

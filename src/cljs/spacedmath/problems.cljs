@@ -2,7 +2,8 @@
   (:require 
     [goog.string :as gstring]
     [goog.string.format]
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [clojure.set :refer [intersection map-invert]])
   (:require-macros [utils :as ut]))
 
 (defn convert [target]
@@ -12,8 +13,7 @@
     (char? target) target
     :else (keyword "spacedmath.problems" (name target))))
 
-(defn variance
-  [func]
+(defn variance [func]
   (cond
     (char? func) #{func}
     (vector? func) (reduce #(into %1 (variance %2)) #{} (rest func))
@@ -88,13 +88,13 @@
                     ::tan ::cot
                     ::sec ::csc})
 
-(def identities {::sin [::cos ::input]
-                 ::cos [::mult -1 [::sin ::input]]
-                 ::tan [::power [[::sec ::input] 2]]
-                 ::cot [::mult -1 [::power [[::csc ::input] 2]]]
-                 ::sec [::mult [[::sec ::input] [::tan ::input]]]
-                 ::csc [::mult -1 [::mult [[::csc ::input] [::cot ::input]]]]
-                 ::exp [::exp ::input]})
+(def identities {::sin [::cos \x]
+                 ::cos [::mult -1 [::sin \x]]
+                 ::tan [::power [[::sec \x] 2]]
+                 ::cot [::mult -1 [::power [[::csc \x] 2]]]
+                 ::sec [::mult [[::sec \x] [::tan \x]]]
+                 ::csc [::mult -1 [::mult [[::csc \x] [::cot \x]]]]
+                 ::exp [::exp \x]})
 
 (def non-operand
   {::add [:any 0]
@@ -170,7 +170,7 @@
 (defn distrinput [target input]
   (into [] (map
              (fn [item]
-               (if (= item ::input) input (if (vector? item) (distrinput item input) item)))
+               (if (= item \x) input (if (vector? item) (distrinput item input) item)))
              target)))
 
 (defn is-math? [target math]
@@ -298,25 +298,7 @@
   {:text (str "Structure " (name (first func)) " not supported.")
    :math 0
    :skills #{}})
-          
    
-
-(defn find-derives [target]
-  (if-not (vector? target)
-    []
-    (cond
-      (= (first target) ::derive) [(nth target 1)]
-      (< (count target) 3) (find-derives (last target))
-      :else
-      (reduce
-        (fn [result item]
-          (if
-            (vector? item)
-            (into result (if (= (first item) ::derive) [(nth item 1)] (find-derives item)))
-            result))
-        []
-        (rest target)))))
-
 
 (defn prime-dive [func]
   (if (not (vector? func))
@@ -336,6 +318,70 @@
                    :answer (conj (:answer stack) (:answer result))}))
               {:text [] :skills #{} :answer [(first func)]}
               (rest func)))))
+
+
+(def rules (atom []))
+
+(swap! rules (fn [current]
+               (concat
+                 current
+                 (map
+                   (fn [[func res]] {:match [::derive [func \x] \x]
+                                     :result res
+                                     :skills #{func}
+                                     :text "Use the identity to find"})
+                   identities))))
+
+(defn my-keys [item]
+  (let [key-store (keys item)]
+    (if (= nil key-store) '#{} (into #{} key-store))))
+
+(defn variance-invert [mapping]
+  (let [backwards (map-invert mapping)
+        pairs (into [] backwards)
+        variant (map (fn [[a b]] [(variance a) b]) pairs)
+        spread (mapcat (fn [[a b]] (map (fn [c] [c b]) a)) variant)]
+    (into {} spread)))
+        
+(defn clean-merge [a b]
+  (if (or (= nil a) (= nil b)) nil
+    (let [a-inverse (variance-invert a)
+          b-inverse (variance-invert b)
+          val-collisions (intersection (my-keys a-inverse) (my-keys b-inverse))
+          val-compatible (every? #(= (get a-inverse %) (get b-inverse %)) val-collisions)
+          key-collisions (intersection (my-keys a) (my-keys b))
+          key-compatible (every? #(= (get a %) (get b %)) key-collisions)]
+      (if (and val-compatible key-compatible) (merge a b) nil))))
+
+(defn math-match [math pattern]
+  (cond
+    (char? pattern) {pattern math}
+    (and (keyword? math) (= math pattern)) {}
+    (and (vector? math) (vector? pattern))
+    (cond
+      (and (= (count math) (count pattern)) (char? (first pattern)))
+      (let [[math-fn arg] math
+            [fn-name param] pattern]
+        (if (not (isa? math-fn ::unary)) nil
+          (clean-merge {fn-name math-fn} (math-match arg param))))
+      (= (count math) (count pattern))
+      (let [mapped (map math-match math pattern)]
+        (reduce clean-merge mapped)))))
+
+(defn first-rule [math rules]
+  (first (remove #(nil? (first %)) (map #(do [(math-match math (:match %)) %]) rules))))
+
+(defn symbol-replace [math mapping]
+  (into [] (map
+             (fn [item]
+               (if (contains? mapping item) (get mapping item) (if (vector? item) (symbol-replace item mapping) item)))
+             math)))
+
+(defn prime-pattern [func]
+  (let [[mapping rule] (first-rule func @rules)]
+    {:text (:text rule)
+     :skills (:skills rule)
+     :answer (symbol-replace (:result rule) mapping)}))
 
 
 (defn basic-derivation [func]
