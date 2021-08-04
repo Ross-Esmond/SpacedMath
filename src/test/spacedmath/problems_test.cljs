@@ -24,10 +24,6 @@
   (is (= (p/latex (convert [:add 5 3 2])) "5 + 3 + 2"))
   (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2")))
 
-(deftest distrinput
-  (is (= (p/distrinput [::p/sin \x] \t) [::p/sin \t]))
-  (is (= (p/distrinput [::p/sin [::p/cos \x]] \t) [::p/sin [::p/cos \t]])))
-
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
   (is (=
@@ -87,18 +83,6 @@
   (is (= (p/simplify [::p/mult [::p/mult 5 5] 5]) [::p/mult 5 5 5]))
   (is (= (p/simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w]))
   (is (= (p/simplify [::p/mult 5 -3]) [::p/mult -5 3])))
-
-(deftest insta-add
-  (is (= (p/insta-add 2 3) 5))
-  (is (= (p/insta-add 2 -3) -1))
-  (is (= (p/insta-add [::p/div 4 3] [::p/div 1 3]) [::p/div 5 3]))
-  (is (= (p/insta-add [::p/div 4 3] 1) [::p/div 7 3]))
-  (is (= (p/insta-add [::p/div 4 3] -1) [::p/div 1 3]))
-  (is (= (p/insta-add [::p/div 1 2] [::p/div 1 2]) 1))
-  (is (= (p/insta-add [::p/mult -1 [::p/div 1 3]] [::p/div 2 3]) [::p/div 1 3])))
-
-(deftest crunch-numbers
-  (is (= (p/crunch-numbers [::p/mult -1 [::p/div 1 3]]) [::p/div -1 3])))
 
 (deftest math-match
   (is (= (p/math-match \t \x) {\x \t}))
