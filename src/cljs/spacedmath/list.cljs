@@ -28,6 +28,11 @@
   [[[:equal [:fn \f \x] [:exp \x]] #{:exp} [:exp \x]]
    [[:equal [:fn \f \x] [:mult [:add [:mult 3 [:power \x 2]] [:mult -5 \x]] [:exp \x]]]
     #{:product :exp :add :power :scaler}
-     [:add [:mult [:add [:mult 3 2 \x] -5] [:exp \x]] [:mult [:add [:mult 3 [:power \x 2]] [:mult -5 \x]] [:exp \x]]]]])
+     [:add [:mult [:add [:mult 3 2 \x] -5] [:exp \x]] [:mult [:add [:mult 3 [:power \x 2]] [:mult -5 \x]] [:exp \x]]]]
+   [[:equal [:fn \g \x] [:mult [:add \x [:mult 2 [:root \x 2]]] [:exp \x]]]
+    #{:product :exp :add :power :scaler}
+    [:add
+     [:mult [:add [:mult 2 [:div 1 2] [:power "x" [:add [:div 1 2] -1]]] 1] [:exp "x"]]
+     [:mult [:add "x" [:mult 2 [:root "x" 2]]] [:exp "x"]]]]])
 
 (swap! math-list #(concat % (map first  detailed-math-list)))

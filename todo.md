@@ -23,6 +23,9 @@ function of `x` matches just `x` or a constant.
 Simplifications Engine:
 - [ ] Roll Simplifications into rules engine.
 - [ ] Simplify fraction subtraction.
+- [ ] Simplify mutliplication of numbers.
+- [ ] Simplify multiplication of fractions.
+- [ ] Reduce fractions.
 
 Math structures:
 - [X] Subtraction.\*
