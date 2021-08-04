@@ -32,7 +32,7 @@ Math structures:
 \* Only for pretty-printing and latex.
 
 Pretty Printing
-- [ ] Make pretty printing recursive on addition.
+- [x] Make pretty printing recursive on addition.
 
 Derivation:
 - [ ] Chain Rule.

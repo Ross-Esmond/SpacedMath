@@ -2,6 +2,7 @@
   (:require
     [cljs.test :refer-macros [deftest is testing run-tests]]
     [spacedmath.problems :as p :refer [convert]]
+    [spacedmath.list :refer [detailed-math-list]]
     [clojure.string :refer [includes?]]))
 
 (deftest convert-numbers
@@ -57,6 +58,12 @@
 (deftest prime-pattern-answers
   (doseq [[problem answer] answers]
     (is (= (:answer (p/prime-pattern problem)) answer))))
+
+(deftest math-list-verification
+  (doseq [item detailed-math-list]
+    (let [{answer :answer skills :skills} (p/prime-pattern [::p/derive (p/convert (nth (first item) 2)) \x])]
+      (is (= answer (p/convert (nth item 2))))
+      (is (= skills (p/convert (nth item 1)))))))
 
 (deftest variance
   (is (= (p/variance 5) #{}))

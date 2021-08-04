@@ -9,6 +9,7 @@
 (defn convert [target]
   (cond
     (vector? target) (vec (map convert target))
+    (set? target) (set (map convert target))
     (number? target) target
     (char? target) target
     :else (keyword "spacedmath.problems" (name target))))
@@ -47,7 +48,9 @@
              result
              (cond
                (= -1 item) ["-"]
-               (and (number? item) (number? prev)) [(parens (latex item))]
+               (or
+                 (and (number? item) (number? prev))
+                 (and (vector? item) (or (= ::add (first item)) (= ::subtract (first item))))) [(parens (latex item))]
                :else [(latex item)]))
            item])
         [[] nil]
@@ -156,7 +159,8 @@
 
 (defmulti pretty-print math-fn)
 (defmethod pretty-print ::add [root]
-  (let [result
+  (let [recursive (into [::add] (map pretty-print (rest root)))
+        result
         (reduce
           (fn [stack item]
             (cond
@@ -166,8 +170,8 @@
               [::add [::subtract stack (into [::mult (- (nth item 1))] (nthrest item 2))]]
               :else
               (conj stack item)))
-          (into [] (take 2 root))
-          (nthrest root 2))]
+          (into [] (take 2 recursive))
+          (nthrest recursive 2))]
     (simplify result)))
 (defmethod pretty-print :default [math] (if (not (vector? math)) math
                                           (let [[func & items] math]
