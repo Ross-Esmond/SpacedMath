@@ -412,6 +412,13 @@
       :result [::derive [::power \x [::div 1 \c]] \x]
       :skills #{}
       :text #(str "Convert root to an exponent."
+                  (mm [::equal %1 %2]))}
+     {:match [::derive [::div [\f \x] [\g \x]] \x]
+      :result [::div
+               [::add [::mult [\g \x] [::derive [\f \x] \x]] [::mult -1 [\f \x] [::derive [\g \x] \x]]]
+               [::power [\g \x] 2]]
+      :skills #{::div}
+      :text #(str "Apply the Quotient Rule."
                   (mm [::equal %1 %2]))}]))
 
 
