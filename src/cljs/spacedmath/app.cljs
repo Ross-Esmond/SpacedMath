@@ -92,7 +92,7 @@
               (map
                 (fn [n] [:div
                            [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
-                           [:label (str "$" (pr/latex (pr/convert (nth ls/math-list n))) "$")]])
+                           [:label (pr/im (pr/convert (nth ls/math-list n)))]])
                 (filter
                   (fn [n]
                     (let [t (nth detailed-list n)]

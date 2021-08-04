@@ -19,7 +19,9 @@
   (is (= (p/latex (convert [:mult 5 2 3])) "5\\left(2\\right)\\left(3\\right)"))
   (is (= (p/latex (convert [:fn \f \x])) "f(x)"))
   (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'(x)"))
-  (is (= (p/latex (convert [:power [:power \x 2] 2])) "\\left(x^{2}\\right)^{2}")))
+  (is (= (p/latex (convert [:power [:power \x 2] 2])) "\\left(x^{2}\\right)^{2}"))
+  (is (= (p/latex (convert [:add 5 3 2])) "5 + 3 + 2"))
+  (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin \x] \t) [::p/sin \t]))
@@ -114,6 +116,12 @@
            [::p/derive [::p/div \c [\f \x]] \x])
          {\c 5 [\f \x] [::p/power \x 4] \x \x}))
   (is (= (p/math-match [::p/derive [::p/mult \x \x] \x] [::p/derive [::p/mult \c [\f \x]] \x]) nil)))
+
+(deftest pretty-print
+  (is (= (p/pretty-print [::p/add \x -3]) [::p/subtract \x 3]))
+  (is (= (p/pretty-print [::equal \y [::p/add \x -3]]) [::equal \y [::p/subtract \x 3]]))
+  (is (= (p/pretty-print [::p/add \x [::p/mult -3 \x]]) [::p/subtract \x [::p/mult 3 \x]]))
+  (is (= (p/pretty-print [::p/add [::p/mult -1 \x] [::p/mult -3 \x]]) [::p/subtract [::p/mult -1 \x] [::p/mult 3 \x]])))
 
 
 

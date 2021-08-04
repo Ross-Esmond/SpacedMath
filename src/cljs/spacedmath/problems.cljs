@@ -34,7 +34,8 @@
 (defmethod latex ::exec [func] (str "\\" (name (first func)) (parens (latex (last func)))))
 (defmethod latex ::symbol [sym] (name sym))
 (defmethod latex ::named [sym] (str "\\" (str (name sym) " ")))
-(defmethod latex ::add [func] (string/join "+" (map latex (rest func))))
+(defmethod latex ::add [func] (string/join " + " (map latex (rest func))))
+(defmethod latex ::subtract [[_ l r]] (str (latex l) " - " (latex r)))
 (defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
 (defmethod latex ::numeric [number] (str number))
 (defmethod latex ::mult [func]
@@ -67,37 +68,6 @@
 (defmethod latex ::fn [[_ ident variable]] (str ident \( variable \)))
 (defmethod latex ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
 (defmethod latex :default [_] "Nothing")
-
-
-(def skills (atom #{::add ::power ::chain ::const}))
-
-(derive ::add ::commutative)
-(derive ::mult ::commutative)
-(derive ::add ::associative)
-(derive ::mult ::associative)
-(derive ::trig ::unary)
-(derive ::trig ::exec)
-(derive ::sin ::trig)
-(derive ::cos ::trig)
-(derive ::tan ::trig)
-(derive ::sec ::trig)
-(derive ::csc ::trig)
-(derive ::cot ::trig)
-(derive ::exp ::unary)
-(derive ::power ::unary)
-(derive ::power ::numbered)
-
-(def complementary {::sin ::cos
-                    ::tan ::cot
-                    ::sec ::csc})
-
-(def identities {::sin [::cos \x]
-                 ::cos [::mult -1 [::sin \x]]
-                 ::tan [::power [::sec \x] 2]
-                 ::cot [::mult -1 [::power [::csc \x] 2]]
-                 ::sec [::mult [::sec \x] [::tan \x]]
-                 ::csc [::mult -1 [::csc \x] [::cot \x]]
-                 ::exp [::exp \x]})
 
 (def non-operand
   {::add [:any 0]
@@ -183,6 +153,60 @@
         remove-inconsequential-operators
         consolidate-exponents))
     :else func))
+
+(defmulti pretty-print math-fn)
+(defmethod pretty-print ::add [root]
+  (let [result
+        (reduce
+          (fn [stack item]
+            (cond
+              (and (number? item) (< item 0))
+              [::add [::subtract stack (- item)]]
+              (and (vector? item) (= ::mult (first item)) (number? (nth item 1)) (< (nth item 1) 0))
+              [::add [::subtract stack (into [::mult (- (nth item 1))] (nthrest item 2))]]
+              :else
+              (conj stack item)))
+          (into [] (take 2 root))
+          (nthrest root 2))]
+    (simplify result)))
+(defmethod pretty-print :default [math] (if (not (vector? math)) math
+                                          (let [[func & items] math]
+                                            (into [func] (map pretty-print items)))))
+
+
+(defn im [eq] (str "$" (latex (pretty-print eq)) "$"))
+(defn mm [eq] (str "$$" (latex (pretty-print eq)) "$$"))
+
+
+(def skills (atom #{::add ::power ::chain ::const}))
+
+(derive ::add ::commutative)
+(derive ::mult ::commutative)
+(derive ::add ::associative)
+(derive ::mult ::associative)
+(derive ::trig ::unary)
+(derive ::trig ::exec)
+(derive ::sin ::trig)
+(derive ::cos ::trig)
+(derive ::tan ::trig)
+(derive ::sec ::trig)
+(derive ::csc ::trig)
+(derive ::cot ::trig)
+(derive ::exp ::unary)
+(derive ::power ::unary)
+(derive ::power ::numbered)
+
+(def complementary {::sin ::cos
+                    ::tan ::cot
+                    ::sec ::csc})
+
+(def identities {::sin [::cos \x]
+                 ::cos [::mult -1 [::sin \x]]
+                 ::tan [::power [::sec \x] 2]
+                 ::cot [::mult -1 [::power [::csc \x] 2]]
+                 ::sec [::mult [::sec \x] [::tan \x]]
+                 ::csc [::mult -1 [::csc \x] [::cot \x]]
+                 ::exp [::exp \x]})
 
 (def greek #{::pi})
 
@@ -350,45 +374,45 @@
     [{:match [::derive \c \x]
       :result 0
       :skills #{::const}
-      :text #(str "The expression $" (latex (nth % 1)) "$ is just a number, so its derivative is 0."
-                  "$$" (latex [::equal %1 %2]) "$$")}
+      :text #(str "The expression " (im (nth % 1)) " is just a number, so its derivative is 0."
+                  (mm [::equal %1 %2]))}
      {:match [::derive \x \x]
       :result 1
       :skills #{}
-      :text #(str "The derivative of $" (latex (nth % 1)) "$ is just 1.\n"
-                  "$$" (latex [::equal %1 %2]) "$$")}
+      :text #(str "The derivative of " (im (nth % 1)) " is just 1.\n"
+                  (mm [::equal %1 %2]))}
      {:match [::derive [::add [\f \x] [\g \x]] \x]
       :result [::add [::derive [\f \x] \x] [::derive [\g \x] \x]]
       :skills #{::add}
       :text #(str "Distribute derivation over addition."
-                  "$$" (latex [::equal %1 %2]) "$$")}
+                  (mm [::equal %1 %2]))}
      {:match [::derive [::mult \c [\f \x]] \x]
       :result [::mult \c [::derive [\f \x] \x]]
       :skills #{::scaler}
       :text #(str
-               "Since $" (latex (get %3 \c)) "$ is just a number, then"
-               "$$" (latex [::equal %1 %2]) "$$")}
+               "Since " (im (get %3 \c)) " is just a number, then"
+               (mm [::equal %1 %2]))}
      {:match [::derive [::mult [\f \x] [\g \x]] \x]
       :result [::add [::mult [::derive [\f \x] \x] [\g \x]] [::mult [\f \x] [::derive [\g \x] \x]]]
       :skills #{::product}
       :text #(str
                "Apply the Product Rule."
-               "$$" (latex [::equal %1 %2]) "$$")}
+               (mm [::equal %1 %2]))}
      {:match [::derive [::div \c [\f \x]] \x]
       :result [::derive [::mult \c [::power [\f \x] -1]] \x]
       :skills #{}
       :text #(str "Invert the denominator."
-                  "$$" (latex [::equal %1 %2]) "$$")}
+                  (mm [::equal %1 %2]))}
      {:match [::derive [::power \x \c] \x]
       :result [::mult \c [::power \x [::add \c -1]]]
       :skills #{::power}
       :text #(str "Apply the power rule."
-                  "$$" (latex [::equal %1 %2]) "$$")}
+                  (mm [::equal %1 %2]))}
      {:match [::derive [::root \x \c] \x]
       :result [::derive [::power \x [::div 1 \c]] \x]
       :skills #{}
       :text #(str "Convert root to an exponent."
-                  "$$" (latex [::equal %1 %2]) "$$")}]))
+                  (mm [::equal %1 %2]))}]))
 
 
 (swap! rules (fn [current]
@@ -400,7 +424,7 @@
                                      :skills #{func}
                                      :text (fn [origional solution _]
                                              (str "Use the identity to find"
-                                                  "$$" (latex [::equal origional solution]) "$$"))})
+                                                  (mm [::equal origional solution])))})
                    identities))))
 
 (defn my-keys [item]
@@ -494,10 +518,10 @@
     (let [[_ solution equation] func
           variable (if (and (vector? solution) (= (first solution) ::fn)) (last solution) (first (variance equation)))
           derived (prime-pattern [::derive equation variable])]
-      {:problem (str "Differentiate the function\n$$" (latex func) "$$")
+      {:problem (str "Differentiate the function" (mm func))
        :steps (:text derived)
        :skills (:skills derived)
-       :answer (str "$$" (latex [::equal [::derive solution variable] (:answer derived)]) "$$")})
+       :answer (str (mm [::equal [::derive solution variable] (:answer derived)]))})
     nil))
 
 

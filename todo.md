@@ -25,9 +25,14 @@ Simplifications Engine:
 - [ ] Simplify fraction subtraction.
 
 Math structures:
-- [ ] Subtraction.
+- [X] Subtraction.\*
 - [ ] Negation.
 - [ ] Parenthesis.
+
+\* Only for pretty-printing and latex.
+
+Pretty Printing
+- [ ] Make pretty printing recursive on addition.
 
 Derivation:
 - [ ] Chain Rule.
