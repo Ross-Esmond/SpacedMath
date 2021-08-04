@@ -26,7 +26,7 @@
 (deftest distrinput
   (is (= (p/distrinput [::p/sin \x] \t) [::p/sin \t]))
   (is (= (p/distrinput [::p/sin [::p/cos \x]] \t) [::p/sin [::p/cos \t]])))
-        
+
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
   (is (=
@@ -36,22 +36,25 @@
        (p/prime-pattern [::p/derive [::p/exp \t] \t])
        {:text ["Use the identity to find$$\\frac{d}{dt}\\left(e^{t}\\right) = e^{t}$$"] :skills #{::p/exp} :answer [::p/exp \t]}))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/exp 5] \x])) #{::p/const}))
-  (is (= (:answer (p/prime-pattern [::p/derive 5 \x]) 0)))
-  (is (= (:answer (p/prime-pattern [::p/derive \x \x])) 1))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/mult 5 \x] \x])) #{::p/scaler}))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/mult [::p/div 7 4] \x] \x])) #{::p/scaler}))
-  (is (= (:skills (p/prime-pattern [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const}))
-  (is (= (:answer (p/prime-pattern [::p/derive [::p/add \x 5] \x])) 1))
-  (is (= (:answer (p/prime-pattern [::p/derive [::p/mult \c \x] \x])) \c))
-  (is (= (:answer (p/prime-pattern [::p/derive [::p/mult [::p/sin \x] [::p/exp \x]] \x]))
-         [::p/add [::p/mult [::p/cos \x] [::p/exp \x]] [::p/mult [::p/sin \x] [::p/exp \x]]]))
-  (is (= (:answer (p/prime-pattern [::p/derive [::p/div 5 [::p/power \x 4]] \x])) [::p/mult -5 4 [::p/power \x -5]]))
-  (is (= (:answer (p/prime-pattern [::p/derive [::p/div 1 \x] \x]) [::p/mult -1 [::p/power \x -2]])))
-  (is (= (:answer (p/prime-pattern [::p/derive [::p/exp [::p/add \x 1]] \x]) [::p/exp [::p/add \x 1]])))
-  (is (= (:answer
-           (p/prime-pattern
-             [::p/derive [::p/add [::p/mult [::p/div 7 4] [::p/power \x 2]] [::p/mult -3 \x] 12] \x]))
-         [::p/add [::p/mult [::p/div 7 4] 2 \x] -3])))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const})))
+
+(def answers
+  [[[::p/derive 5 \x] 0]
+   [[::p/derive \x \x] 1]
+   [[::p/derive [::p/add \x 5] \x] 1]
+   [[::p/derive [::p/mult \c \x] \x] \c]
+   [[::p/derive [::p/mult [::p/sin \x] [::p/exp \x]] \x]
+    [::p/add [::p/mult [::p/cos \x] [::p/exp \x]] [::p/mult [::p/sin \x] [::p/exp \x]]]]
+   [[::p/derive [::p/div 5 [::p/power \x 4]] \x] [::p/mult -5 4 [::p/power \x -5]]]
+   [[::p/derive [::p/div 1 \x] \x] [::p/mult -1 [::p/power \x -2]]]
+   [[::p/derive [::p/add [::p/mult [::p/div 7 4] [::p/power \x 2]] [::p/mult -3 \x] 12] \x]
+    [::p/add [::p/mult [::p/div 7 4] 2 \x] -3]]])
+
+(deftest prime-pattern-answers
+  (doseq [[problem answer] answers]
+    (is (= (:answer (p/prime-pattern problem)) answer))))
 
 (deftest variance
   (is (= (p/variance 5) #{}))
