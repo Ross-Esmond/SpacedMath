@@ -51,7 +51,10 @@
            item])
         [[] nil]
         (rest func)))))
-(defmethod latex ::power [func] (str (latex (nth func 1)) "^{" (latex (nth func 2)) "}"))
+(defmethod latex ::power [func]
+  (let [target (nth func 1)
+        printed (if (or (char? target) (number? target)) target (parens (latex target)))]
+    (str printed "^{" (latex (nth func 2)) "}")))
 (defmethod latex ::derive [func]
   (let [[_ eq target] func]
     (if (and (vector? eq) (= (first eq) ::fn))
@@ -90,10 +93,10 @@
 
 (def identities {::sin [::cos \x]
                  ::cos [::mult -1 [::sin \x]]
-                 ::tan [::power [[::sec \x] 2]]
-                 ::cot [::mult -1 [::power [[::csc \x] 2]]]
-                 ::sec [::mult [[::sec \x] [::tan \x]]]
-                 ::csc [::mult -1 [::mult [[::csc \x] [::cot \x]]]]
+                 ::tan [::power [::sec \x] 2]
+                 ::cot [::mult -1 [::power [::csc \x] 2]]
+                 ::sec [::mult [::sec \x] [::tan \x]]
+                 ::csc [::mult -1 [::csc \x] [::cot \x]]
                  ::exp [::exp \x]})
 
 (def non-operand
@@ -146,7 +149,27 @@
         (if (number? (nth normalized 1))
           (into [::mult] (concat [(- (nth normalized 1))] (subvec normalized 2)))
           (into [::mult -1] (rest normalized)))))))
-  
+
+(defn consolidate-exponents [root]
+  (if (or
+        (not (vector? root))
+        (not (= (first root) ::power))
+        (not (vector? (nth root 1)))
+        (let [nested (first (nth root 1))] (not (or (= nested ::power) (= nested ::root)))))
+    root
+    (let [[power [nested inner a] b] root]
+      (if (= nested ::power)
+        [::power inner (* a b)]
+        [::power inner [::div b a]]))))
+
+(defn addition [root]
+  (if (or (not (vector? root)) (not (= (first root) ::add))) root
+    (let [[stack sum]
+          (reduce
+            (fn [[math sum] item] (if (number? item) [math (+ item sum)] [(conj math item) sum]))
+            [[::add] 0]
+            (rest root))]
+      (conj stack sum))))
 
 (defn simplify [func]
   (cond
@@ -154,9 +177,11 @@
     (let [[operator & operands] func
            root (into [operator] (map simplify operands))]
       (-> root
+        addition
         combine-associative-operands
         consolidate-negation
-        remove-inconsequential-operators))
+        remove-inconsequential-operators
+        consolidate-exponents))
     :else func))
 
 (def greek #{::pi})
@@ -320,7 +345,51 @@
               (rest func)))))
 
 
-(def rules (atom []))
+(def rules
+  (atom
+    [{:match [::derive \c \x]
+      :result 0
+      :skills #{::const}
+      :text #(str "The expression $" (latex (nth % 1)) "$ is just a number, so its derivative is 0."
+                  "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive \x \x]
+      :result 1
+      :skills #{}
+      :text #(str "The derivative of $" (latex (nth % 1)) "$ is just 1.\n"
+                  "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive [::add [\f \x] [\g \x]] \x]
+      :result [::add [::derive [\f \x] \x] [::derive [\g \x] \x]]
+      :skills #{::add}
+      :text #(str "Distribute derivation over addition."
+                  "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive [::mult \c [\f \x]] \x]
+      :result [::mult \c [::derive [\f \x] \x]]
+      :skills #{::scaler}
+      :text #(str
+               "Since $" (latex (get %3 \c)) "$ is just a number, then"
+               "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive [::mult [\f \x] [\g \x]] \x]
+      :result [::add [::mult [::derive [\f \x] \x] [\g \x]] [::mult [\f \x] [::derive [\g \x] \x]]]
+      :skills #{::product}
+      :text #(str
+               "Apply the Product Rule."
+               "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive [::div \c [\f \x]] \x]
+      :result [::derive [::mult \c [::power [\f \x] -1]] \x]
+      :skills #{}
+      :text #(str "Invert the denominator."
+                  "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive [::power \x \c] \x]
+      :result [::mult \c [::power \x [::add \c -1]]]
+      :skills #{::power}
+      :text #(str "Apply the power rule."
+                  "$$" (latex [::equal %1 %2]) "$$")}
+     {:match [::derive [::root \x \c] \x]
+      :result [::derive [::power \x [::div 1 \c]] \x]
+      :skills #{}
+      :text #(str "Convert root to an exponent."
+                  "$$" (latex [::equal %1 %2]) "$$")}]))
+
 
 (swap! rules (fn [current]
                (concat
@@ -329,7 +398,9 @@
                    (fn [[func res]] {:match [::derive [func \x] \x]
                                      :result res
                                      :skills #{func}
-                                     :text "Use the identity to find"})
+                                     :text (fn [origional solution _]
+                                             (str "Use the identity to find"
+                                                  "$$" (latex [::equal origional solution]) "$$"))})
                    identities))))
 
 (defn my-keys [item]
@@ -342,13 +413,27 @@
         variant (map (fn [[a b]] [(variance a) b]) pairs)
         spread (mapcat (fn [[a b]] (map (fn [c] [c b]) a)) variant)]
     (into {} spread)))
-        
+
+(defn spare-variance-invert [mapping]
+  (let [inverted (variance-invert mapping)
+        whitelisted (into {} (map (fn [[l t]] [l (if (vector? t) (into #{} (rest t)) t)]) inverted))]
+    whitelisted))
+
+(defn value-compatible? [a b]
+  (do
+    (cond
+      (and (char? a) (char? b)) (= a b)
+      (and (set? a) (set? b)) true
+      (and (set? a) (char? b)) (contains? a b)
+      (and (set? b) (char? a)) (contains? b a)
+      :default false)))
+
 (defn clean-merge [a b]
   (if (or (= nil a) (= nil b)) nil
-    (let [a-inverse (variance-invert a)
-          b-inverse (variance-invert b)
+    (let [a-inverse (spare-variance-invert a)
+          b-inverse (spare-variance-invert b)
           val-collisions (intersection (my-keys a-inverse) (my-keys b-inverse))
-          val-compatible (every? #(= (get a-inverse %) (get b-inverse %)) val-collisions)
+          val-compatible (every? #(value-compatible? (get a-inverse %) (get b-inverse %)) val-collisions)
           key-collisions (intersection (my-keys a) (my-keys b))
           key-compatible (every? #(= (get a %) (get b %)) key-collisions)]
       (if (and val-compatible key-compatible) (merge a b) nil))))
@@ -357,38 +442,58 @@
   (cond
     (char? pattern) {pattern math}
     (and (keyword? math) (= math pattern)) {}
-    (and (vector? math) (vector? pattern))
+    (vector? pattern)
     (cond
-      (and (= (count math) (count pattern)) (char? (first pattern)))
-      (let [[math-fn arg] math
-            [fn-name param] pattern]
-        (if (not (isa? math-fn ::unary)) nil
-          (clean-merge {fn-name math-fn} (math-match arg param))))
-      (= (count math) (count pattern))
-      (let [mapped (map math-match math pattern)]
-        (reduce clean-merge mapped)))))
+      (char? (first pattern))
+      {pattern math}
+      (vector? math)
+      (cond
+        (= (count math) (count pattern))
+        (let [mapped (map math-match math pattern)]
+          (reduce clean-merge mapped))
+        (and (= (first math) (first pattern)) (isa? (first pattern) ::associative))
+        (let [[operator left & right] math
+              fixed [operator left (into [operator] right)]]
+          (math-match fixed pattern))))))
 
 (defn first-rule [math rules]
   (first (remove #(nil? (first %)) (map #(do [(math-match math (:match %)) %]) rules))))
 
 (defn symbol-replace [math mapping]
-  (into [] (map
-             (fn [item]
-               (if (contains? mapping item) (get mapping item) (if (vector? item) (symbol-replace item mapping) item)))
-             math)))
+  (if (not (vector? math)) math
+    (into [] (map
+               (fn [item]
+                 (if (contains? mapping item) (get mapping item) (if (vector? item) (symbol-replace item mapping) item)))
+               math))))
 
 (defn prime-pattern [func]
-  (let [[mapping rule] (first-rule func @rules)]
-    {:text (:text rule)
-     :skills (:skills rule)
-     :answer (symbol-replace (:result rule) mapping)}))
+  (if (not (vector? func))
+    {:text []
+     :skills #{}
+     :answer func}
+    (let [simpler (simplify func)]
+      (if (= ::derive (first simpler))
+        (let [[mapping rule] (first-rule simpler @rules)
+              next-math (simplify (symbol-replace (:result rule) mapping))
+              recursion (prime-pattern next-math)
+              textual (if (not (fn? (:text rule))) "Failed to solve." ((:text rule) simpler next-math mapping))]
+          {:text (concat [textual] (:text recursion))
+           :skills (into (:skills rule) (:skills recursion))
+           :answer (simplify (:answer recursion))})  
+        (reduce (fn [stack op]
+                  (let [result (prime-pattern op)]
+                    {:text (concat (:text stack) (:text result))
+                     :skills (into (:skills stack) (:skills result))
+                     :answer (conj (:answer stack) (:answer result))}))
+                {:text [] :skills #{} :answer [(first simpler)]}
+                (rest simpler))))))
 
 
 (defn basic-derivation [func]
   (if (= (nth func 0) ::equal)
     (let [[_ solution equation] func
           variable (if (and (vector? solution) (= (first solution) ::fn)) (last solution) (first (variance equation)))
-          derived (prime-dive [::derive equation variable])]
+          derived (prime-pattern [::derive equation variable])]
       {:problem (str "Differentiate the function\n$$" (latex func) "$$")
        :steps (:text derived)
        :skills (:skills derived)

@@ -20,5 +20,5 @@
     [:equal [:fn \h \u] [:add [:mult \A [:power \u 3]] [:mult \B [:power \u 2]] [:mult \C \u]]]
     [:equal [:fn \j \x] [:add [:power \x 2.4] [:exp 2.4]]]
     [:equal [:fn \k \r] [:add [:exp \r] [:power \r \e]]]
-    [:equal [:fn \f \y] [:add [:div \A [:power \y 10]] [:mult \B [:exp \y]]]]
-    [:equal \y [:add [:exp [:add \x 1]] 1]]])
+    [:equal [:fn \f \y] [:add [:div \A [:power \y 10]] [:mult \B [:exp \y]]]]])
+    ;[:equal \y [:add [:exp [:add \x 1]] 1]]])

@@ -1,7 +1,8 @@
 (ns spacedmath.problems-test
   (:require
     [cljs.test :refer-macros [deftest is testing run-tests]]
-    [spacedmath.problems :as p :refer [convert]]))
+    [spacedmath.problems :as p :refer [convert]]
+    [clojure.string :refer [includes?]]))
 
 (deftest convert-numbers
   (is (= (convert [:mult -1 [:exp \x]]) [::p/mult -1 [::p/exp \x]])))
@@ -17,29 +18,38 @@
   (is (= (p/latex (convert \y)) "y"))
   (is (= (p/latex (convert [:mult 5 2 3])) "5\\left(2\\right)\\left(3\\right)"))
   (is (= (p/latex (convert [:fn \f \x])) "f(x)"))
-  (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'(x)")))
+  (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'(x)"))
+  (is (= (p/latex (convert [:power [:power \x 2] 2])) "\\left(x^{2}\\right)^{2}")))
 
 (deftest distrinput
   (is (= (p/distrinput [::p/sin \x] \t) [::p/sin \t]))
   (is (= (p/distrinput [::p/sin [::p/cos \x]] \t) [::p/sin [::p/cos \t]])))
         
-(deftest prime-dive
-  (is (= (p/prime-dive [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
+(deftest prime-pattern
+  (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
   (is (=
-       (p/prime-dive [::p/derive [::p/exp \x] \x])
+       (p/prime-pattern [::p/derive [::p/exp \x] \x])
        {:text ["Use the identity to find$$\\frac{d}{dx}\\left(e^{x}\\right) = e^{x}$$"] :skills #{::p/exp} :answer [::p/exp \x]}))
   (is (=
-       (p/prime-dive [::p/derive [::p/exp \t] \t])
+       (p/prime-pattern [::p/derive [::p/exp \t] \t])
        {:text ["Use the identity to find$$\\frac{d}{dt}\\left(e^{t}\\right) = e^{t}$$"] :skills #{::p/exp} :answer [::p/exp \t]}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/exp 5] \x])) #{::p/const}))
-  (is (= (:answer (p/prime-dive [::p/derive 5 \x]) 0)))
-  (is (= (:answer (p/prime-dive [::p/derive \x \x])) 1))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/mult 5 \x] \x])) #{::p/scaler}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/mult [::p/div 7 4] \x] \x])) #{::p/scaler}))
-  (is (= (:skills (p/prime-dive [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const}))
-  (is (= (:answer (p/prime-dive [::p/derive [::p/mult \c \x] \x])) \c))
-  (is (= (:answer (p/prime-dive [::p/derive [::p/div 5 [::p/power \x 4] \x] \x])) [::p/mult -5 4 [::p/power \x -5]]))
-  (is (= (:answer (p/prime-dive [::p/derive [::p/exp [::p/add \x 1]] \x]) [::p/exp [::p/add \x 1]]))))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/exp 5] \x])) #{::p/const}))
+  (is (= (:answer (p/prime-pattern [::p/derive 5 \x]) 0)))
+  (is (= (:answer (p/prime-pattern [::p/derive \x \x])) 1))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/mult 5 \x] \x])) #{::p/scaler}))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/mult [::p/div 7 4] \x] \x])) #{::p/scaler}))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const}))
+  (is (= (:answer (p/prime-pattern [::p/derive [::p/add \x 5] \x])) 1))
+  (is (= (:answer (p/prime-pattern [::p/derive [::p/mult \c \x] \x])) \c))
+  (is (= (:answer (p/prime-pattern [::p/derive [::p/mult [::p/sin \x] [::p/exp \x]] \x]))
+         [::p/add [::p/mult [::p/cos \x] [::p/exp \x]] [::p/mult [::p/sin \x] [::p/exp \x]]]))
+  (is (= (:answer (p/prime-pattern [::p/derive [::p/div 5 [::p/power \x 4]] \x])) [::p/mult -5 4 [::p/power \x -5]]))
+  (is (= (:answer (p/prime-pattern [::p/derive [::p/div 1 \x] \x]) [::p/mult -1 [::p/power \x -2]])))
+  (is (= (:answer (p/prime-pattern [::p/derive [::p/exp [::p/add \x 1]] \x]) [::p/exp [::p/add \x 1]])))
+  (is (= (:answer
+           (p/prime-pattern
+             [::p/derive [::p/add [::p/mult [::p/div 7 4] [::p/power \x 2]] [::p/mult -3 \x] 12] \x]))
+         [::p/add [::p/mult [::p/div 7 4] 2 \x] -3])))
 
 (deftest variance
   (is (= (p/variance 5) #{}))
@@ -58,8 +68,10 @@
   (is (= (p/simplify [::p/power 5 1]) 5))
   (is (= (p/simplify [::p/power [::p/mult 5 \x] 1]) [::p/mult 5 \x]))
   (is (= (p/simplify [::p/power [::p/mult 1 \x] 1]) \x))
+  (is (= (p/simplify [::p/power [::p/power \x 5] -2]) [::p/power \x -10]))
+  (is (= (p/simplify [::p/power [::p/root \x 5] -2]) [::p/power \x [::p/div -2 5]]))
   (is (= (p/simplify [::p/mult [::p/mult 5 5] 5]) [::p/mult 5 5 5]))
-  (is (= (p/simplify [::p/add 2 [::p/add 3 4] 5]) [::p/add 2 3 4 5]))
+  (is (= (p/simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w]))
   (is (= (p/simplify [::p/mult 5 -3]) [::p/mult -5 3])))
 
 (deftest insta-add
@@ -82,17 +94,32 @@
   (is (= (p/math-match [::p/tan \u] [::p/sin \x]) nil))
   (is (= (p/math-match [::p/tan [::p/sin \u]] [::p/tan [::p/sin \x]]) {\x \u}))
   (is (= (p/math-match [::p/mult [::p/sin \u] [::p/tan \v]] [::p/mult [::p/sin \x] [::p/tan \x]]) nil))
-  (is (= (p/math-match [::p/sin \u] [\f \x]) {\f ::p/sin \x \u}))
+  (is (= (p/math-match [::p/derive [::p/sin \u] \u] [::p/derive [\f \x] \x]) {[\f \x] [::p/sin \u] \x \u}))
   (is (= (p/math-match [::p/derive [::p/sin \v] \u] [::p/derive [::p/sin \x] \x]) nil))
   (is (= (p/math-match [::p/derive [::p/sin \u] \u] [::p/derive [::p/sin \x] \x]) {\x \u}))
   (is (= (p/math-match [::p/derive [::p/mult \a \u] \u] [::p/derive [::p/mult \c \x] \x]) {\c \a \x \u}))
   (is (= (p/math-match [::p/derive [::p/mult [::p/sin \d] \u] \u] [::p/derive [::p/mult \c \x] \x]) {\c [::p/sin \d] \x \u}))
   (is (= (p/math-match [::p/derive [::p/mult [::p/sin \u] \u] \u] [::p/derive [::p/mult \c \x] \x]) nil))
-  (is (= (p/math-match [::p/sin [::p/tan \u]] [\f [\f \x]]) nil))
-  (is (= (p/math-match [::p/mult [::p/sin \u] [::p/tan \u]] [::p/mult [\g \x] [\f \x]]) {\g ::p/sin \f ::p/tan \x \u}))
+  (is (= (p/math-match [::p/derive [::p/add \x 5] \x] [::p/derive [::p/add [\f \u] [\g \u]] \u])
+         {[\f \u] \x, [\g \u] 5, \u \x}))
+  (is (= (p/math-match
+           [::p/derive [::p/mult [::p/sin \u] [::p/tan \u]] \u]
+           [::p/derive [::p/mult [\g \x] [\f \x]] \x])
+         {[\g \x] [::p/sin \u] [\f \x] [::p/tan \u] \x \u}))
   (is (= (p/math-match [::p/mult \u \v] [::p/mult \x \x]) nil))
-  (is (= (p/math-match [::p/mult \u \u] [::p/mult \x \y]) nil)))
+  (is (= (p/math-match [::p/mult \u \u] [::p/mult \x \y]) nil))
+  (is (= (p/math-match [::p/derive [::p/exp 5] \u] [::p/derive \c \x]) {\c [::p/exp 5] \x \u}))
+  (is (= (p/math-match
+           [::p/derive [::p/div 5 [::p/power \x 4]] \x]
+           [::p/derive [::p/div \c [\f \x]] \x])
+         {\c 5 [\f \x] [::p/power \x 4] \x \x}))
+  (is (= (p/math-match [::p/derive [::p/mult \x \x] \x] [::p/derive [::p/mult \c [\f \x]] \x]) nil)))
 
-(deftest prime-pattern
+
+
+(deftest prime-pattern-auto
   (doseq [rule @p/rules]
-    (is (= (p/prime-pattern (:match rule)) {:text (:text rule) :skills (:skills rule) :answer (:result rule)}))))
+    (if (not (includes? (str (:result rule)) "derive"))
+      (is (= (p/prime-pattern (:match rule)) {:text [((:text rule) (:match rule) (:result rule) {\c \c})]
+                                              :skills (:skills rule)
+                                              :answer (:result rule)})))))
