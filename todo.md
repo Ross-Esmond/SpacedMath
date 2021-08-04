@@ -38,5 +38,8 @@ Derivation:
 - [ ] Chain Rule.
 - [ ] Quotient Rule.
 
+Development:
+- [ ] Add logging using timbre.
+
 Other:
 - [ ] Write latex dsl.
