@@ -44,5 +44,17 @@ Derivation:
 Development:
 - [ ] Add logging using timbre.
 
+Adding Problems:
+- [ ] implement simple math expression parser
+- [ ] create tool to quickly add new equations to system
+  - [ ] display equation in latex
+  - [ ] display solution in latex
+  - [ ] display skills involved
+
+Application:
+- [ ] Get google login working on site.
+- [ ] Get relational database running.
+- [ ] Setup permission tracking.
+
 Other:
 - [ ] Write latex dsl.
