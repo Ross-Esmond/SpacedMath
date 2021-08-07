@@ -44,7 +44,7 @@
 
 (def target (atom nil))
 
-(defn card-build [] 
+(defn card-build []
   (do
     (-> @target
       (.-innerHTML)

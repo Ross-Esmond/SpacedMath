@@ -3,7 +3,9 @@
     [goog.string :as gstring]
     [goog.string.format]
     [clojure.string :as string]
-    [clojure.set :refer [intersection map-invert]])
+    [clojure.set :refer [intersection map-invert]]
+    [instaparse.core :as insta]
+    [clojure.core.match :refer [match]])
   (:require-macros [utils :as ut]))
 
 (defn convert [target]
@@ -398,3 +400,33 @@
       (mathexact a b))
     (mathexact a b)))
 
+(def parser (insta/parser (ut/swig "mafs.bnf")))
+
+(defn parse-convert [node]
+  (match node
+    (:or [:exp input] [:exp "(" input ")"])
+    (parse-convert input)
+    [:multary left operator & remainder]
+    (into
+      [(get {\* ::mult \+ ::add} operator) (parse-convert left)]
+      (map parse-convert (remove #(= % operator) remainder)))
+    (:or [:multary "(" left operator & remainder] [:multary left operator & remainder])
+    (into
+      [(get {\* ::mult \+ ::add} operator) (parse-convert left)]
+      (map parse-convert (remove #(or (= % operator) (= % ")")) remainder)))
+    (:or [:binary "(" left operator right ")"] [:binary left operator right])
+    [(get {\/ ::div \^ ::power \= ::equal} operator) (parse-convert left) (parse-convert right)]
+    [:unary & remainder]
+    (let [call (string/join (map parse-convert (drop-last 3 remainder)))
+          [_ arg _] (take-last 3 remainder)]
+      [(convert (keyword call)) (parse-convert arg)])
+    [:number & digits]
+    (js/parseFloat (string/join digits))
+    [:function ident "(" variable ")"]
+    [::fn (parse-convert ident) (parse-convert variable)]
+    [:char letter]
+    letter
+    :else
+    node))
+
+(defn parse-mafs [code] (simplify (parse-convert (parser code))))

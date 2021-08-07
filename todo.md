@@ -45,11 +45,13 @@ Development:
 - [ ] Add logging using timbre.
 
 Adding Problems:
-- [ ] implement simple math expression parser
+- [x] implement simple math expression parser
 - [ ] create tool to quickly add new equations to system
-  - [ ] display equation in latex
+  - [x] display equation in latex
   - [ ] display solution in latex
   - [ ] display skills involved
+  - [ ] verify problem solution using open source library like sympy
+  - [ ] enter problems into database
 
 Application:
 - [ ] Get google login working on site.

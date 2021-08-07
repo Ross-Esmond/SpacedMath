@@ -127,3 +127,19 @@
       (is (= (p/prime-pattern (:match rule)) {:text [((:text rule) (:match rule) (:result rule) {\c \c})]
                                               :skills (:skills rule)
                                               :answer (:result rule)})))))
+
+(deftest parser
+  (is (= (p/parse-mafs "(50*50)") [::p/mult 50 50]))
+  (is (= (p/parse-mafs "f(x)") [::p/fn \f \x]))
+  (is (= (p/parse-mafs "f(x)") [::p/fn \f \x]))
+  (is (= (p/parse-mafs "f(x)=((x^2)+(2*x))")
+         [::p/equal [::p/fn \f \x] [::p/add [::p/power \x 2] [::p/mult 2 \x]]]))
+  (is (= (p/parse-mafs "f(x)=((x^2)+(2*x*y))")
+         [::p/equal [::p/fn \f \x] [::p/add [::p/power \x 2] [::p/mult 2 \x \y]]]))
+  (is (= (p/parse-mafs "(x+2+x+y)")
+         [::p/add \x \x \y 2]))
+  (is (= (p/parse-mafs "2^40") [::p/power 2 40]))
+  (is (= (p/parse-mafs "1.4^40") [::p/power 1.4 40]))
+  (is (= (p/parse-mafs "exp(40)") [::p/exp 40]))
+  (is (= (p/parse-mafs "sin(x)") [::p/sin \x]))
+  (is (= (p/parse-mafs "f(x)=tan(2*x)") [::p/equal [::p/fn \f \x] [::p/tan [::p/mult 2 \x]]])))
