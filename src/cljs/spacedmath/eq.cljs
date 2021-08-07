@@ -27,7 +27,11 @@
       (set! (let [parsed (parse-mafs @equation)]
               (str
                 (mm parsed)
-                (if (and (vector? parsed) (= (first parsed) ::p/equal)) (:answer (p/basic-derivation parsed)))))))
+                (if (and (vector? parsed) (= (first parsed) ::p/equal))
+                  (let [problem (p/basic-derivation parsed)]
+                    (str
+                      (map #(name %) (:skills problem))
+                      (:answer problem))))))))
     (. js/MathJax typeset)))
 
 (add-watch equation nil render)

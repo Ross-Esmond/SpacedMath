@@ -49,7 +49,7 @@ Adding Problems:
 - [ ] create tool to quickly add new equations to system
   - [x] display equation in latex
   - [x] display solution in latex
-  - [ ] display skills involved
+  - [x] display skills involved
   - [ ] verify problem solution using open source library like sympy
   - [ ] enter problems into database
 
