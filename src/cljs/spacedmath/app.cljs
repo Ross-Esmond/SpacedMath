@@ -2,7 +2,6 @@
   (:require
     [spacedmath.problems :as pr]
     [spacedmath.list :as ls]
-    [re-frame.core :as re-frame]
     [reagent.dom :as rdom]
     [reagent.core :as reagent]
     [cljs.core.async :refer [go]]

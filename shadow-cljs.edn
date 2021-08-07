@@ -22,8 +22,9 @@
    :output-dir "resources/public/js/compiled"
    :asset-path "/js/compiled"
    :modules
-   {:app {:init-fn spacedmath.app/init :depends-on #{:eq}}
-    :eq {:init-fn spacedmath.eq/init}}
+   {:app {:init-fn spacedmath.app/init :depends-on #{:shared}}
+    :eq {:init-fn spacedmath.eq/init :depends-on #{:shared}}
+    :shared {}}
    :devtools
    {:preloads []}
    :dev
