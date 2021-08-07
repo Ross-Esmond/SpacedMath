@@ -26,6 +26,7 @@ Simplifications Engine:
 - [ ] Simplify mutliplication of numbers.
 - [ ] Simplify multiplication of fractions.
 - [ ] Reduce fractions.
+- [ ] Factor out common components in multiplication and division.
 
 Math structures:
 - [X] Subtraction.\*
@@ -46,6 +47,7 @@ Development:
 
 Adding Problems:
 - [x] implement simple math expression parser
+- [ ] add mafs guide to page
 - [ ] create tool to quickly add new equations to system
   - [x] display equation in latex
   - [x] display solution in latex
@@ -58,5 +60,7 @@ Application:
 - [ ] Get relational database running.
 - [ ] Setup permission tracking.
 
-Other:
+Latex:
+- [ ] print derivation of variable--d/dx(y)--as one fraction: dy/dx.
 - [ ] Write latex dsl.
+- [ ] Function calls like sin(x) shouldn't use left-right parens.
