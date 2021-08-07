@@ -4,7 +4,7 @@
     [reagent.core :as reagent]
     [cljs.core.async :refer [go]]
     [cljs-http.client :as http]
-    [spacedmath.problems :refer [parse-mafs mm]])
+    [spacedmath.problems :as p :refer [parse-mafs mm]])
   (:require-macros
     [utils :as ut]))
 
@@ -24,7 +24,10 @@
   (do
     (-> @output
       (.-innerHTML)
-      (set! (mm (parse-mafs @equation))))
+      (set! (let [parsed (parse-mafs @equation)]
+              (str
+                (mm parsed)
+                (if (and (vector? parsed) (= (first parsed) ::p/equal)) (:answer (p/basic-derivation parsed)))))))
     (. js/MathJax typeset)))
 
 (add-watch equation nil render)

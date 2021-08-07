@@ -48,7 +48,7 @@ Adding Problems:
 - [x] implement simple math expression parser
 - [ ] create tool to quickly add new equations to system
   - [x] display equation in latex
-  - [ ] display solution in latex
+  - [x] display solution in latex
   - [ ] display skills involved
   - [ ] verify problem solution using open source library like sympy
   - [ ] enter problems into database
