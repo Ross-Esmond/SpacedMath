@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"fmt"
 	"os"
+	"encoding/json"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -12,10 +13,26 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
+
+	"gorm.io/gorm"
+	"gorm.io/driver/sqlite"
 )
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+type Problem struct {
+    gorm.Model
+    Problem string
+    Answer  string
+    Author  string
+    Add      uint
+    Constant uint
+    Scaler   uint
+    Power    uint
+    Exp      uint
+    Product  uint
+}
 
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+var db, err = gorm.Open(sqlite.Open("sm.db"), &gorm.Config{})
 
 func CallbackHandler(res http.ResponseWriter, req *http.Request) {
 	user, err := gothic.CompleteUserAuth(res, req)
@@ -61,8 +78,23 @@ func LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(""))
 }
 
+func ProblemHandler(res http.ResponseWriter, req *http.Request) {
+	session, _ := store.Get(req, "session-name")
+	email := session.Values["email"]
+	if email == nil {
+		res.WriteHeader(http.StatusUnauthorized)
+	} else {
+		var problem Problem
+		json.NewDecoder(req.Body).Decode(&problem)
+		problem.Author = email.(string)
+		db.Create(&problem)
+	}
+}
+
 
 func main() {
+	db.AutoMigrate(&Problem{})
+
 	goth.UseProviders(
 		google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), "http://localhost:3000/api/callback/google"),
 	)
@@ -80,6 +112,7 @@ func main() {
 	r.HandleFunc("/api/auth/{provider}", AuthHandler)
 	r.HandleFunc("/api/profile", ProfileHandler)
 	r.HandleFunc("/api/logout", LogoutHandler)
+	r.HandleFunc("/api/problems", ProblemHandler).Methods("POST")
 
 	http.Handle("/js/", http.FileServer(http.Dir("resources/public/")))
 	http.Handle("/", http.FileServer(http.Dir("static/")))

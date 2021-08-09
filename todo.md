@@ -48,12 +48,19 @@ Development:
 Adding Problems:
 - [x] implement simple math expression parser
 - [ ] add mafs guide to page
+- [ ] extend mafs
+  - [ ] add sqrt
+  - [ ] add greek letters
 - [ ] create tool to quickly add new equations to system
   - [x] display equation in latex
   - [x] display solution in latex
   - [x] display skills involved
   - [ ] verify problem solution using open source library like sympy
-  - [ ] enter problems into database
+  - [x] enter problems into database
+  - [ ] serve those problems and display them in main app
+  - [ ] link to eq.html
+  - [ ] add visual indictation of successful problem addition
+  - [ ] check if equation is valid before submitting
 
 Application:
 - [ ] Get google login working on site.

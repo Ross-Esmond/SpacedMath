@@ -2,6 +2,7 @@
   (:require
     [reagent.dom :as rdom]
     [reagent.core :as reagent]
+    [clojure.string :refer [capitalize]]
     [cljs.core.async :refer [go]]
     [cljs-http.client :as http]
     [spacedmath.problems :as p :refer [parse-mafs mm]])
@@ -17,10 +18,24 @@
   (go (let [response (<! (http/get "/api/logout"))]
         (reset! user ""))))
 
+(defn add-problem [problem answer skills]
+  (http/post "/api/problems" {:json-params (into
+                                            {:Problem problem :Answer answer}
+                                            (map (fn [i] [(capitalize (name i)) 1]) skills))}))
+
 (def equation (reagent/atom ""))
 (def output (atom nil))
 
-(defn render [] 
+(defn jsonify [input]
+  (.stringify js/JSON (clj->js input)))
+
+(defn handle-add []
+  (let [parsed (parse-mafs @equation)
+        answer (:answer (p/prime-pattern [::p/derive (last parsed) \x]))
+        problem (p/basic-derivation parsed)]
+    (add-problem (jsonify parsed) (jsonify answer) (:skills problem))))
+
+(defn render []
   (do
     (-> @output
       (.-innerHTML)
@@ -50,7 +65,9 @@
                 :else [:div @user
                        [:span {:id "logout" :on-click #(logout)} "log out"]])]]
           [:main
-           [:textarea {:value @equation :on-change #(reset! equation (-> % .-target .-value))}]
+           [:div
+            [:textarea {:value @equation :on-change #(reset! equation (-> % .-target .-value))}] [:br]
+            [:button {:on-click handle-add :disabled (= "" @user)} "Add Problem"]]
            [:div {:style {:margin "10px"} :ref (fn [el] (reset! output el))}]]])}))
 
 (defn init []
