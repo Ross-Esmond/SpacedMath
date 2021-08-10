@@ -91,6 +91,13 @@ func ProblemHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func ProblemServer(res http.ResponseWriter, req *http.Request) {
+	var problems []Problem
+	db.Find(&problems)
+	res.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(res).Encode(problems)
+}
+
 
 func main() {
 	db.AutoMigrate(&Problem{})
@@ -113,6 +120,7 @@ func main() {
 	r.HandleFunc("/api/profile", ProfileHandler)
 	r.HandleFunc("/api/logout", LogoutHandler)
 	r.HandleFunc("/api/problems", ProblemHandler).Methods("POST")
+	r.HandleFunc("/api/problems", ProblemServer).Methods("GET")
 
 	http.Handle("/js/", http.FileServer(http.Dir("resources/public/")))
 	http.Handle("/", http.FileServer(http.Dir("static/")))

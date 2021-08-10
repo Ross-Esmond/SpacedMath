@@ -26,6 +26,18 @@
 (set! *warn-on-infer* false)
 
 
+(defn json->clj [string]
+  (js->clj (.parse js/JSON string)))
+
+(defn keywordify [data]
+  (if (vector? data) (into [(keyword (first data))] (map keywordify (rest data))) data))
+
+(def problem-list (reagent/atom []))
+
+(go (let [response (<! (http/get "/api/problems"))]
+      (reset! problem-list (map #(keywordify (json->clj (:Problem %))) (:body response)))))
+
+
 (def user (reagent/atom nil))
 
 (go (let [response (<! (http/get "/api/profile"))]
@@ -91,13 +103,13 @@
               (map
                 (fn [n] [:div
                            [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
-                           [:label (pr/im (pr/convert (nth @ls/math-list n)))]])
+                           [:label (pr/im (pr/convert (nth @problem-list n)))]])
                 (filter
                   (fn [n]
                     (let [t (nth detailed-list n)]
                       (every? #(contains? (:skills t) %) filt)))
-                  (range (count @ls/math-list)))))
-            [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth @ls/math-list @selected))))))}
+                  (range (count @problem-list)))))
+            [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth @problem-list @selected))))))}
              "Update"]]
            [:div {:class "card" :style {:margin "20px"} :ref (fn [el] (reset! target el))}]]])
      :component-did-update card-build}))

@@ -51,20 +51,20 @@ Adding Problems:
 - [ ] extend mafs
   - [ ] add sqrt
   - [ ] add greek letters
-- [ ] create tool to quickly add new equations to system
+- [x] create tool to quickly add new equations to system
   - [x] display equation in latex
   - [x] display solution in latex
   - [x] display skills involved
   - [ ] verify problem solution using open source library like sympy
   - [x] enter problems into database
-  - [ ] serve those problems and display them in main app
+  - [x] serve those problems and display them in main app
   - [ ] link to eq.html
   - [ ] add visual indictation of successful problem addition
   - [ ] check if equation is valid before submitting
 
 Application:
-- [ ] Get google login working on site.
-- [ ] Get relational database running.
+- [x] Get google login working on site.
+- [x] Get relational database running.
 - [ ] Setup permission tracking.
 
 Latex:
