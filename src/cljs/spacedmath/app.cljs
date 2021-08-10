@@ -77,6 +77,7 @@
         [:<>
           [:header
             [:div
+              [:div [:a {:href "/eq.html"} "Problem Editor"]]
               (cond
                 (= @user "") [:div "\u202F"
                                            [:a {:id "login" :href "/api/auth/google"} "log in"]]

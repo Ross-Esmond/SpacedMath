@@ -47,7 +47,7 @@ Development:
 
 Adding Problems:
 - [x] implement simple math expression parser
-- [ ] add mafs guide to page
+- [x] add mafs guide to page
 - [ ] extend mafs
   - [ ] add sqrt
   - [ ] add greek letters
@@ -58,7 +58,7 @@ Adding Problems:
   - [ ] verify problem solution using open source library like sympy
   - [x] enter problems into database
   - [x] serve those problems and display them in main app
-  - [ ] link to eq.html
+  - [x] link to eq.html
   - [ ] add visual indictation of successful problem addition
   - [ ] check if equation is valid before submitting
 
