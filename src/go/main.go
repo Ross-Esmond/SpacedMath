@@ -106,14 +106,6 @@ func main() {
 		google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), "http://localhost:3000/api/callback/google"),
 	)
 
-	m := make(map[string]string)
-	m["google"] = "Google"
-
-	var keys []string
-	for k := range m {
-		keys = append(keys, k)
-	}
-
 	r := mux.NewRouter()
 	r.HandleFunc("/api/callback/{provider}", CallbackHandler)
 	r.HandleFunc("/api/auth/{provider}", AuthHandler)
