@@ -48,8 +48,8 @@ Development:
 Adding Problems:
 - [x] implement simple math expression parser
 - [x] add mafs guide to page
-- [ ] extend mafs
-  - [ ] add sqrt
+- [x] extend mafs
+  - [x] add sqrt
   - [x] add greek letters\*
 - [x] create tool to quickly add new equations to system
   - [x] display equation in latex

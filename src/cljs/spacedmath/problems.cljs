@@ -416,8 +416,10 @@
       (map parse-convert (remove #(or (= % operator) (= % ")")) remainder)))
     (:or [:binary "(" left operator right ")"] [:binary left operator right])
     [(get {\/ ::div \^ ::power \= ::equal} operator) (parse-convert left) (parse-convert right)]
-    [:unary ident _ arg _]
-    [(convert (keyword (string/join (map parse-convert (rest ident))))) (parse-convert arg)]
+    [:call ident _ args _]
+    (into
+      [(convert (keyword (string/join (map parse-convert (rest ident)))))]
+      (map parse-convert (remove #(= % ",") (rest args))))
     [:number & digits]
     (js/parseFloat (string/join digits))
     [:function ident "(" variable ")"]

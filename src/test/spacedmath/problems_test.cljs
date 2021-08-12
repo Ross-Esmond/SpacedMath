@@ -144,4 +144,5 @@
   (is (= (p/parse-mafs "sin(x)") [::p/sin \x]))
   (is (= (p/parse-mafs "f(x)=tan(2*x)") [::p/equal [::p/fn \f \x] [::p/tan [::p/mult 2 \x]]]))
   (is (= (p/parse-mafs "pi") ::p/pi))
-  (is (= (p/parse-mafs "pi*R") [::p/mult ::p/pi \R])))
+  (is (= (p/parse-mafs "pi*R") [::p/mult ::p/pi \R]))
+  (is (= (p/parse-mafs "root(x,2)") [::p/root \x 2])))
