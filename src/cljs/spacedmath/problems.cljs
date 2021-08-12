@@ -33,9 +33,11 @@
 
 (defn parens [& strings] (str "\\left(" (string/join strings) "\\right)"))
 
+(defn ensure-vector [item] (if (vector? item) item [item]))
+
 (defmulti latex math-fn)
-(defmethod latex ::exec [func] (str "\\" (name (first func)) (parens (latex (last func)))))
-(defmethod latex ::symbol [sym] (name sym))
+(defmethod latex ::exec [item] (let [func (ensure-vector item)] (str "\\" (name (first func)) (parens (latex (first (rest func)))))))
+(defmethod latex ::symbol [sym] sym)
 (defmethod latex ::named [sym] (str "\\" (str (name sym) " ")))
 (defmethod latex ::add [func] (string/join " + " (map latex (rest func))))
 (defmethod latex ::subtract [[_ l r]] (str (latex l) " - " (latex r)))

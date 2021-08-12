@@ -22,7 +22,8 @@
   (is (= (p/latex (convert [:derive [:fn \f \x] \x])) "f'(x)"))
   (is (= (p/latex (convert [:power [:power \x 2] 2])) "\\left(x^{2}\\right)^{2}"))
   (is (= (p/latex (convert [:add 5 3 2])) "5 + 3 + 2"))
-  (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2")))
+  (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2"))
+  (is (= (p/latex (convert :sin)) "\\sin\\left(Nothing\\right)")))
 
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
