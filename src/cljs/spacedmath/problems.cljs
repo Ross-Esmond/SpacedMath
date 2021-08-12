@@ -35,15 +35,16 @@
 
 (defn ensure-vector [item] (if (vector? item) item [item]))
 
-(defmulti latex math-fn)
-(defmethod latex ::exec [item] (let [func (ensure-vector item)] (str "\\" (name (first func)) (parens (latex (first (rest func)))))))
-(defmethod latex ::symbol [sym] sym)
-(defmethod latex ::named [sym] (str "\\" (str (name sym) " ")))
-(defmethod latex ::add [func] (string/join " + " (map latex (rest func))))
-(defmethod latex ::subtract [[_ l r]] (str (latex l) " - " (latex r)))
-(defmethod latex ::exp [func] (str "e^{" (latex (last func)) "}"))
-(defmethod latex ::numeric [number] (str number))
-(defmethod latex ::mult [func]
+(defmulti latex-multi math-fn)
+(defn latex [item] (if (isa? item ::operator) (latex-multi (ensure-vector item)) (latex-multi item)))
+(defmethod latex-multi ::exec [func] (str "\\" (name (first func)) (parens (latex (first (rest func))))))
+(defmethod latex-multi ::symbol [sym] sym)
+(defmethod latex-multi ::named [sym] (str "\\" (str (name sym) " ")))
+(defmethod latex-multi ::add [func] (string/join " + " (map latex (rest func))))
+(defmethod latex-multi ::subtract [[_ l r]] (str (latex l) " - " (latex r)))
+(defmethod latex-multi ::exp [func] (str "e^{" (latex (last func)) "}"))
+(defmethod latex-multi ::numeric [number] (str number))
+(defmethod latex-multi ::mult [func]
   (string/join
     (first
       (reduce
@@ -59,22 +60,22 @@
            item])
         [[] nil]
         (rest func)))))
-(defmethod latex ::power [func]
+(defmethod latex-multi ::power [func]
   (let [target (nth func 1)
         printed (if (or (char? target) (number? target)) target (parens (latex target)))]
     (str printed "^{" (latex (nth func 2)) "}")))
-(defmethod latex ::derive [func]
+(defmethod latex-multi ::derive [func]
   (let [[_ eq target] func]
     (if (and (vector? eq) (= (first eq) ::fn))
       (let [[_ ident variable] eq]
         (str ident "'(" variable ")"))
       (str "\\frac{d}{d" (nth func 2) "}" (parens (latex (nth func 1)))))))
-(defmethod latex ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
-(defmethod latex ::div [func]
+(defmethod latex-multi ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
+(defmethod latex-multi ::div [func]
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
-(defmethod latex ::fn [[_ ident variable]] (str ident \( variable \)))
-(defmethod latex ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
-(defmethod latex :default [_] "Nothing")
+(defmethod latex-multi ::fn [[_ ident variable]] (str ident \( variable \)))
+(defmethod latex-multi ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
+(defmethod latex-multi :default [_] "Nothing")
 
 (def non-operand
   {::add [:any 0]
@@ -188,6 +189,10 @@
 
 (def skills (atom #{::add ::power ::chain ::const}))
 
+(derive ::binary ::operator)
+(derive ::add ::binary)
+(derive ::mult ::binary)
+(derive ::unary ::operator)
 (derive ::add ::commutative)
 (derive ::mult ::commutative)
 (derive ::add ::associative)
@@ -201,8 +206,9 @@
 (derive ::csc ::trig)
 (derive ::cot ::trig)
 (derive ::exp ::unary)
-(derive ::power ::unary)
+(derive ::power ::operator)
 (derive ::power ::numbered)
+(derive ::root ::operator)
 
 (def complementary {::sin ::cos
                     ::tan ::cot

@@ -9,7 +9,7 @@
   (is (= (convert [:mult -1 [:exp \x]]) [::p/mult -1 [::p/exp \x]])))
 
 (deftest latex
-  (is (= (p/latex (convert [:mult -1 [:sin \x]]) "-\\sin\\left(x\\right)"))
+  (is (= (p/latex (convert [:mult -1 [:sin \x]])) "-\\sin\\left(x\\right)")
       "negative latex printing failed")
   (is (= (p/latex (convert [:mult 3 \x])) "3x") "printing with a scaler multiple failed")
   (is (= (p/latex (convert :pi)) "\\pi ") "printing pi failed")
@@ -23,7 +23,8 @@
   (is (= (p/latex (convert [:power [:power \x 2] 2])) "\\left(x^{2}\\right)^{2}"))
   (is (= (p/latex (convert [:add 5 3 2])) "5 + 3 + 2"))
   (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2"))
-  (is (= (p/latex (convert :sin)) "\\sin\\left(Nothing\\right)")))
+  (is (= (p/latex (convert :sin)) "\\sin\\left(Nothing\\right)"))
+  (is (= (p/latex (convert :root)) "\\sqrt[Nothing]{Nothing}")))
 
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
