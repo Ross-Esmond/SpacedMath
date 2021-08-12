@@ -22,11 +22,37 @@ function of `x` matches just `x` or a constant.
 
 Simplifications Engine:
 - [ ] Roll Simplifications into rules engine.
-- [ ] Simplify fraction subtraction.
-- [ ] Simplify mutliplication of numbers.
-- [ ] Simplify multiplication of fractions.
-- [ ] Reduce fractions.
-- [ ] Factor out common components in multiplication and division.
+- [ ] Definitions
+  - [ ] a + a = 2a
+  - [ ] a\*a = a^2
+- [ ] Cancelation
+  - [ ] a - a = 0
+  - [ ] a/a = 1
+- [ ] Calculations
+  - [ ] 2 + 2 = 4
+  - [ ] 2\*2 = 4
+  - [ ] 2^2 = 4
+  - [ ] 4/6 = 2/3
+- [ ] Fraction Arithmetic
+  - [ ] 1/2 + 1 = 3/2
+  - [ ] 2/3\*4/3 = 8/9
+  - [ ] \(2/3)^2 = 4/9
+- [ ] Combinations
+  - [ ] \(a+b)+c = a+b+c
+  - [ ] \(ab)c = abc
+  - [ ] \(a^b)^c = a^(bc)
+- [ ] Normalization
+  - [ ] \(-1)/2 = -(1/2)
+  - [ ] a + (-b) = a - b
+  - [ ] a\*(1/b) = a/b
+- [ ] Numeric forms
+  - [ ] fractions: 1/3
+  - [ ] decimal: 0.25
+  - [ ] irrational: 0.33…
+- [ ] Timing
+  - [ ] instantanious: before the user even sees it x^1=x
+  - [ ] ohio case: with one equality before moving on (x^2/2)'=2x/2=x
+  - [ ] belated: saved till the end in case the user doesn't do it 28/49=4/7
 
 Math structures:
 - [X] Subtraction.\*
