@@ -24,7 +24,8 @@
   (is (= (p/latex (convert [:add 5 3 2])) "5 + 3 + 2"))
   (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2"))
   (is (= (p/latex (convert :sin)) "\\sin\\left(Nothing\\right)"))
-  (is (= (p/latex (convert :root)) "\\sqrt[Nothing]{Nothing}")))
+  (is (= (p/latex (convert :root)) "\\sqrt[Nothing]{Nothing}"))
+  (is (= (p/latex (convert :exp)) "e^{Nothing}")))
 
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))

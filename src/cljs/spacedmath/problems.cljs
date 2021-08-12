@@ -42,7 +42,7 @@
 (defmethod latex-multi ::named [sym] (str "\\" (str (name sym) " ")))
 (defmethod latex-multi ::add [func] (string/join " + " (map latex (rest func))))
 (defmethod latex-multi ::subtract [[_ l r]] (str (latex l) " - " (latex r)))
-(defmethod latex-multi ::exp [func] (str "e^{" (latex (last func)) "}"))
+(defmethod latex-multi ::exp [func] (str "e^{" (latex (first (rest func))) "}"))
 (defmethod latex-multi ::numeric [number] (str number))
 (defmethod latex-multi ::mult [func]
   (string/join
