@@ -1,8 +1,9 @@
-exp = multary | binary | unary | char | number | function | ("(", exp, ")");
+exp = multary | binary | unary | char | number | function | name | ("(", exp, ")");
 
 multary = exp, { ( "+" | "*" ), exp }+;
 binary = exp, ( "/" | "^" | "=" ), exp;
-unary = char, {char}+, "(", exp, ")";
+name = char, char, {char}+;
+unary = name, "(", exp, ")";
 function = char, "(", char, ")";
 
 char = "A" | "B" | "C" | "D" | "E" | "F" | "G"

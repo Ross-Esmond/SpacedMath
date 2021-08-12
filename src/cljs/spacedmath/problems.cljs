@@ -416,14 +416,14 @@
       (map parse-convert (remove #(or (= % operator) (= % ")")) remainder)))
     (:or [:binary "(" left operator right ")"] [:binary left operator right])
     [(get {\/ ::div \^ ::power \= ::equal} operator) (parse-convert left) (parse-convert right)]
-    [:unary & remainder]
-    (let [call (string/join (map parse-convert (drop-last 3 remainder)))
-          [_ arg _] (take-last 3 remainder)]
-      [(convert (keyword call)) (parse-convert arg)])
+    [:unary ident _ arg _]
+    [(convert (keyword (string/join (map parse-convert (rest ident))))) (parse-convert arg)]
     [:number & digits]
     (js/parseFloat (string/join digits))
     [:function ident "(" variable ")"]
     [::fn (parse-convert ident) (parse-convert variable)]
+    [:name & letters]
+    (convert (keyword (string/join (map parse-convert letters))))
     [:char letter]
     letter
     :else

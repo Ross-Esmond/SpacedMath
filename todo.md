@@ -50,7 +50,7 @@ Adding Problems:
 - [x] add mafs guide to page
 - [ ] extend mafs
   - [ ] add sqrt
-  - [ ] add greek letters
+  - [x] add greek letters\*
 - [x] create tool to quickly add new equations to system
   - [x] display equation in latex
   - [x] display solution in latex
@@ -61,6 +61,8 @@ Adding Problems:
   - [x] link to eq.html
   - [ ] add visual indictation of successful problem addition
   - [ ] check if equation is valid before submitting
+
+\* Just pi for now, but the feature is working.
 
 Application:
 - [x] Get google login working on site.
