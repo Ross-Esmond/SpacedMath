@@ -230,6 +230,27 @@
 
 (doseq [n greek] (derive n ::named))
 
+(def latex-cost
+  {::subtract 3
+   ::mult 0
+   ::div 1
+   ::parens 2
+   ::root 1
+   ::power 0
+   ::exp 1})
+
+(defn latex-score [math]
+  (cond
+    (= "" math) 0
+    (char? math) 1
+    :else (match math
+            [::add & operands]
+            (+ (* 3 (- (count operands) 1)) (reduce + (map latex-score operands)))
+            [(operator :guard #(ut/log (isa? % ::exec))) & operands]
+            (+ (count (name operator)) 2 (reduce + (map latex-score operands)))
+            [operator & operands]
+            (+ (operator latex-cost) (reduce + (map latex-score operands))))))
+
 
 (def rules
   (atom

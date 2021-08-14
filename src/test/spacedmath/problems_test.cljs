@@ -150,3 +150,16 @@
   (is (= (p/parse-mafs "pi*R") [::p/mult ::p/pi \R]))
   (is (= (p/parse-mafs "root(x,2)") [::p/root \x 2]))
   (is (= (p/parse-mafs "y=x^2") [::p/equal \y [::p/power \x 2]])))
+
+(deftest latex-score
+  (is (= (p/latex-score "") 0))
+  (is (= (p/latex-score \x) 1))
+  (is (= (p/latex-score [::p/add \x \y]) 5))
+  (is (= (p/latex-score [::p/add \x \y \z]) 9))
+  (is (= (p/latex-score [::p/mult \x \y \z]) 3))
+  (is (= (p/latex-score [::p/power \x \a]) 2))
+  (is (= (p/latex-score [::p/root \x \a]) 3))
+  (is (= (p/latex-score [::p/div \x \a]) 3))
+  (is (= (p/latex-score [::p/exp \a]) 2))
+  (is (= (p/latex-score [::p/parens [::p/add \a \b]]) 7))
+  (is (= (p/latex-score [::p/sin \x]) 6)))
