@@ -353,24 +353,6 @@
           key-compatible (every? #(= (get a %) (get b %)) key-collisions)]
       (if (and val-compatible key-compatible) (merge a b) nil))))
 
-(defn math-match [math pattern]
-  (cond
-    (char? pattern) {pattern math}
-    (and (keyword? math) (= math pattern)) {}
-    (vector? pattern)
-    (cond
-      (char? (first pattern))
-      {pattern math}
-      (vector? math)
-      (cond
-        (= (count math) (count pattern))
-        (let [mapped (map math-match math pattern)]
-          (reduce clean-merge mapped))
-        (and (= (first math) (first pattern)) (isa? (first pattern) ::associative))
-        (let [[operator left & right] math
-              fixed [operator left (into [operator] right)]]
-          (math-match fixed pattern))))))
-
 (defn cross-product [items] (into [] (apply combo/cartesian-product items)))
 (defn in? [coll elm] (some #(= elm %) coll))
 (defn combogen [cards slots]
@@ -406,7 +388,7 @@
 
 
 (defn first-rule [math rules]
-  (first (remove #(nil? (first %)) (map #(do [(math-match math (:match %)) %]) rules))))
+  (first (remove #(nil? (first %)) (map #(do [(first (math-unify math (:match %))) %]) rules))))
 
 (defn symbol-replace [math mapping]
   (if (not (vector? math)) math

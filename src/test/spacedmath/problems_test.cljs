@@ -87,36 +87,7 @@
   (is (= (p/simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w]))
   (is (= (p/simplify [::p/mult 5 -3]) [::p/mult -5 3])))
 
-(deftest math-match
-  (is (= (p/math-match \t \x) {\x \t}))
-  (is (= (p/math-match ::p/sin ::p/sin) {}))
-  (is (= (p/math-match [::p/sin \u] \x) {\x [::p/sin \u]}))
-  (is (= (p/math-match [::p/sin \u] [::p/sin \x]) {\x \u}))
-  (is (= (p/math-match [::p/tan \u] [::p/sin \x]) nil))
-  (is (= (p/math-match [::p/tan [::p/sin \u]] [::p/tan [::p/sin \x]]) {\x \u}))
-  (is (= (p/math-match [::p/mult [::p/sin \u] [::p/tan \v]] [::p/mult [::p/sin \x] [::p/tan \x]]) nil))
-  (is (= (p/math-match [::p/derive [::p/sin \u] \u] [::p/derive [\f \x] \x]) {[\f \x] [::p/sin \u] \x \u}))
-  (is (= (p/math-match [::p/derive [::p/sin \v] \u] [::p/derive [::p/sin \x] \x]) nil))
-  (is (= (p/math-match [::p/derive [::p/sin \u] \u] [::p/derive [::p/sin \x] \x]) {\x \u}))
-  (is (= (p/math-match [::p/derive [::p/mult \a \u] \u] [::p/derive [::p/mult \c \x] \x]) {\c \a \x \u}))
-  (is (= (p/math-match [::p/derive [::p/mult [::p/sin \d] \u] \u] [::p/derive [::p/mult \c \x] \x]) {\c [::p/sin \d] \x \u}))
-  (is (= (p/math-match [::p/derive [::p/mult [::p/sin \u] \u] \u] [::p/derive [::p/mult \c \x] \x]) nil))
-  (is (= (p/math-match [::p/derive [::p/add \x 5] \x] [::p/derive [::p/add [\f \u] [\g \u]] \u])
-         {[\f \u] \x, [\g \u] 5, \u \x}))
-  (is (= (p/math-match
-           [::p/derive [::p/mult [::p/sin \u] [::p/tan \u]] \u]
-           [::p/derive [::p/mult [\g \x] [\f \x]] \x])
-         {[\g \x] [::p/sin \u] [\f \x] [::p/tan \u] \x \u}))
-  (is (= (p/math-match [::p/mult \u \v] [::p/mult \x \x]) nil))
-  (is (= (p/math-match [::p/mult \u \u] [::p/mult \x \y]) nil))
-  (is (= (p/math-match [::p/derive [::p/exp 5] \u] [::p/derive \c \x]) {\c [::p/exp 5] \x \u}))
-  (is (= (p/math-match
-           [::p/derive [::p/div 5 [::p/power \x 4]] \x]
-           [::p/derive [::p/div \c [\f \x]] \x])
-         {\c 5 [\f \x] [::p/power \x 4] \x \x}))
-  (is (= (p/math-match [::p/derive [::p/mult \x \x] \x] [::p/derive [::p/mult \c [\f \x]] \x]) nil)))
-
-(deftest math-unify-switch
+(deftest math-unify
   (is (= (p/math-unify \t \x) [{\x \t}]))
   (is (= (p/math-unify ::p/sin ::p/sin) [{}]))
   (is (= (p/math-unify [::p/sin \u] \x) [{\x [::p/sin \u]}]))
@@ -144,9 +115,7 @@
            [::p/derive [::p/div 5 [::p/power \x 4]] \x]
            [::p/derive [::p/div \c [\f \x]] \x])
          [{\c 5 [\f \x] [::p/power \x 4] \x \x}]))
-  (is (= (p/math-unify [::p/derive [::p/mult \x \x] \x] [::p/derive [::p/mult \c [\f \x]] \x]) [])))
-
-(deftest math-unify
+  (is (= (p/math-unify [::p/derive [::p/mult \x \x] \x] [::p/derive [::p/mult \c [\f \x]] \x]) []))
   (is (= (p/math-unify [] []) [{}]))
   (is (= (p/math-unify [::p/div 1 1] [::p/div 1 0]) []))
   (is (= (p/math-unify [::p/div 1 0] [::p/div 1 0]) [{}]))
