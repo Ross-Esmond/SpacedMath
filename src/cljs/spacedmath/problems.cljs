@@ -5,7 +5,8 @@
     [clojure.string :as string]
     [clojure.set :refer [intersection map-invert]]
     [instaparse.core :as insta]
-    [clojure.core.match :refer [match]])
+    [clojure.core.match :refer [match]]
+    [clojure.math.combinatorics :as combo])
   (:require-macros [utils :as ut]))
 
 (defn convert [target]
@@ -369,6 +370,40 @@
         (let [[operator left & right] math
               fixed [operator left (into [operator] right)]]
           (math-match fixed pattern))))))
+
+(defn cross-product [items] (into [] (apply combo/cartesian-product items)))
+(defn in? [coll elm] (some #(= elm %) coll))
+(defn combogen [cards slots]
+  (filter
+    (fn [item] (every? #(in? item %) (range cards)))
+    (cross-product (repeat slots (range cards)))))
+(defn every-grouping [math amount]
+  (->> (combogen amount (- (count math) 1))
+    (map
+      (fn [combo]
+        (into [(first math)]
+          (map #(if (= (count %) 2) (last %) %)
+            (reduce
+              (fn [result [m g]] (assoc result g (conj (get result g) m)))
+              (into [] (repeat amount [(first math)]))
+              (map (fn [m g] [m g]) (rest math) combo))))))))
+
+(defn math-unify [math pattern]
+  (cond
+    (or (number? pattern) (keyword? pattern)) (if (= math pattern) [{}] [])
+    (char? pattern) [{pattern math}]
+    (and (vector? pattern) (char? (first pattern))) [{pattern math}]
+    (and (vector? math) (vector? pattern))
+    (cond
+      (and (isa? (first math) ::commutative) (isa? (first math) ::associative))
+      (->> (every-grouping math (- (count pattern) 1))
+        (map (fn [m] (into [] (remove nil? (map #(reduce clean-merge {} %) (cross-product (map math-unify m pattern)))))))
+        (flatten)
+        (into []))
+      :else
+      (into [] (remove nil? (map #(reduce clean-merge {} %) (cross-product (map math-unify math pattern))))))
+    :else []))
+
 
 (defn first-rule [math rules]
   (first (remove #(nil? (first %)) (map #(do [(math-match math (:match %)) %]) rules))))

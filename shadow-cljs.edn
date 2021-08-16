@@ -10,6 +10,7 @@
   [binaryage/devtools "1.0.3"]
 
   [cljs-http "0.1.39"]
+  [org.clojure/math.combinatorics "0.1.6"]
   [org.clojure/core.match "1.0.0"]
   [instaparse "1.4.10"]]
 

@@ -20,6 +20,11 @@ arbitrary constant. The pattern matcher needs to prioritize simpler matches over
 more complex ones, especially ones that don't "appear" to match, like when a
 function of `x` matches just `x` or a constant.
 
+Math Unifier:
+- [ ] Support recursive matching
+- [ ] Maintain order of variable pattern matchers: [\f \x] and \x
+- [ ] Support partial matches: `u-u` matching `a+b-b`
+
 Simplifications Engine:
 - [ ] Roll Simplifications into rules engine.
 - [ ] Definitions
