@@ -247,7 +247,7 @@
     :else (match math
             [::add & operands]
             (+ (* 3 (- (count operands) 1)) (reduce + (map latex-score operands)))
-            [(operator :guard #(ut/log (isa? % ::exec))) & operands]
+            [(operator :guard #(isa? % ::exec)) & operands]
             (+ (count (name operator)) 2 (reduce + (map latex-score operands)))
             [operator & operands]
             (+ (operator latex-cost) (reduce + (map latex-score operands))))))
