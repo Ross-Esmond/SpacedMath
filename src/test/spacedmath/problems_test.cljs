@@ -47,10 +47,10 @@
    [[::p/derive [::p/mult \c \x] \x] \c]
    [[::p/derive [::p/mult [::p/sin \x] [::p/exp \x]] \x]
     [::p/add [::p/mult [::p/cos \x] [::p/exp \x]] [::p/mult [::p/sin \x] [::p/exp \x]]]]
-   [[::p/derive [::p/div 5 [::p/power \x 4]] \x] [::p/mult -5 4 [::p/power \x -5]]]
+   [[::p/derive [::p/div 5 [::p/power \x 4]] \x] [::p/mult -20 [::p/power \x -5]]]
    [[::p/derive [::p/div 1 \x] \x] [::p/mult -1 [::p/power \x -2]]]
    [[::p/derive [::p/add [::p/mult [::p/div 7 4] [::p/power \x 2]] [::p/mult -3 \x] 12] \x]
-    [::p/add [::p/mult [::p/div 7 4] 2 \x] -3]]
+    [::p/add [::p/mult 2 [::p/div 7 4] \x] -3]]
    [[::p/derive [::p/div [::p/exp \y] [::p/sin \y]] \y]
     [::p/div [::p/add [::p/mult [::p/sin \y] [::p/exp \y]] [::p/mult -1 [::p/exp \y] [::p/cos \y]]] [::p/power [::p/sin \y] 2]]]])
 
@@ -73,6 +73,7 @@
 (deftest rule-simplify
   (is (= (p/rule-simplify 5) 5))
   (is (= (p/rule-simplify [::p/add 5 0]) 5))
+  (is (= (p/rule-simplify [::p/add 1 \x]) [::p/add \x 1]))
   (is (= (p/rule-simplify [::p/add 0 0 0]) 0))
   (is (= (p/rule-simplify [::p/mult 5 1]) 5))
   (is (= (p/rule-simplify [::p/mult \x 1 \y]) [::p/mult \x \y]))
@@ -88,23 +89,6 @@
   (is (= (p/rule-simplify [::p/power [::p/root \x 1] -2]) [::p/power \x -2])))
   ;(is (= (p/rule-simplify [::p/mult [::p/mult \x \y] \z]) [::p/mult \x \y \z])))
   ;(is (= (p/rule-simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w])))
-
-(deftest simplify
-  (is (= (p/simplify 5) 5))
-  (is (= (p/simplify [::p/add 5 0]) 5))
-  (is (= (p/simplify [::p/add 0 0]) 0))
-  (is (= (p/simplify [::p/mult 5 1]) 5))
-  (is (= (p/simplify [::p/mult 1 1]) 1))
-  (is (= (p/simplify [::p/mult 5 1 5]) [::p/mult 5 5]))
-  (is (= (p/simplify [::p/div 5 1]) 5))
-  (is (= (p/simplify [::p/power 5 1]) 5))
-  (is (= (p/simplify [::p/power [::p/mult 5 \x] 1]) [::p/mult 5 \x]))
-  (is (= (p/simplify [::p/power [::p/mult 1 \x] 1]) \x))
-  (is (= (p/simplify [::p/power [::p/power \x 5] -2]) [::p/power \x -10]))
-  (is (= (p/simplify [::p/power [::p/root \x 5] -2]) [::p/power \x [::p/div -2 5]]))
-  (is (= (p/simplify [::p/mult [::p/mult 5 5] 5]) [::p/mult 5 5 5]))
-  (is (= (p/simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w]))
-  (is (= (p/simplify [::p/mult 5 -3]) [::p/mult -5 3])))
 
 (deftest math-unify
   (is (= (p/math-unify \t \x) [{\x \t}]))

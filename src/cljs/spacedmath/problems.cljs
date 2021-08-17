@@ -78,27 +78,6 @@
 (defmethod latex-multi ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
 (defmethod latex-multi :default [_] "Nothing")
 
-(def non-operand
-  {::add [:any 0]
-   ::mult [:any 1]
-   ::div [2, 1]
-   ::power [2, 1]})
-
-(defn remove-inconsequential-operators [root]
-  (if (not (contains? non-operand (first root))) root
-    (let [[target value] ((first root) non-operand)]
-      (if (= target :any)
-        (let [[operator & operands] root
-              filtered (into [operator] (filter #(not (= % value)) operands))]
-          (cond
-            (= (count filtered) 1) value
-            (= (count filtered) 2) (last filtered)
-            :else filtered))
-        (if (= (nth root target) value)
-          (nth root 1)
-          root)))))
-
-
 (defn combine-associative-operands [root]
   (if (or (not (vector? root)) (not (isa? (first root) ::associative))) root
     (do
@@ -112,56 +91,14 @@
             operands)))
       (flat-out root))))
 
-(defn abs [n] (max n (- n)))
-
-(defn consolidate-negation [root]
-  (if (not (= (first root) ::mult)) root
-    (let [[normalized n]
-          (reduce
-            (fn [[stack n] item]
-              (cond
-                (number? item) [(conj stack (abs item)) (if (< item 0) (+ n 1) n)] 
-                :else [(conj stack item) n]))
-            [[::mult] 0]
-            (rest root))]
-      (if (even? n) normalized
-        (if (number? (nth normalized 1))
-          (into [::mult] (concat [(- (nth normalized 1))] (subvec normalized 2)))
-          (into [::mult -1] (rest normalized)))))))
-
-(defn consolidate-exponents [root]
-  (if (or
-        (not (vector? root))
-        (not (= (first root) ::power))
-        (not (vector? (nth root 1)))
-        (let [nested (first (nth root 1))] (not (or (= nested ::power) (= nested ::root)))))
-    root
-    (let [[power [nested inner a] b] root]
-      (if (= nested ::power)
-        [::power inner (* a b)]
-        [::power inner [::div b a]]))))
-
-(defn addition [root]
-  (if (or (not (vector? root)) (not (= (first root) ::add))) root
-    (let [[stack sum]
-          (reduce
-            (fn [[math sum] item] (if (number? item) [math (+ item sum)] [(conj math item) sum]))
-            [[::add] 0]
-            (rest root))]
-      (conj stack sum))))
-
-(defn simplify [func]
-  (cond
-    (vector? func)
+(declare rule-simplify)
+(defn old-simplify [func]
+  (if (not (vector? func)) func
     (let [[operator & operands] func
-           root (into [operator] (map simplify operands))]
-      (-> root
-        addition
-        combine-associative-operands
-        consolidate-negation
-        remove-inconsequential-operators
-        consolidate-exponents))
-    :else func))
+           root (into [operator] (map old-simplify operands))]
+      (combine-associative-operands root))))
+
+(defn simplify [func] (rule-simplify (old-simplify func)))
 
 (defmulti pretty-print math-fn)
 (defmethod pretty-print ::add [root]
@@ -171,14 +108,16 @@
           (fn [stack item]
             (cond
               (and (number? item) (< item 0))
-              [::add [::subtract stack (- item)]]
+              [[::subtract (if (< 1 (count stack)) (into [::add] stack) (first stack)) (- item)]]
               (and (vector? item) (= ::mult (first item)) (number? (nth item 1)) (< (nth item 1) 0))
-              [::add [::subtract stack (into [::mult (- (nth item 1))] (nthrest item 2))]]
+              [[::subtract
+                (if (< 1 (count stack)) (into [::add] stack) (first stack))
+                (into [::mult (- (nth item 1))] (nthrest item 2))]]
               :else
               (conj stack item)))
-          (into [] (take 2 recursive))
+          [(nth recursive 1)]
           (nthrest recursive 2))]
-    (simplify result)))
+    (simplify (if (= 1 (count result)) (first result) (into [::add] result)))))
 (defmethod pretty-print :default [math] (if (not (vector? math)) math
                                           (let [[func & items] math]
                                             (into [func] (map pretty-print items)))))
@@ -207,7 +146,7 @@
 (derive ::csc ::trig)
 (derive ::cot ::trig)
 (derive ::exp ::unary)
-(derive ::power ::operator)
+(derive ::power ::binary)
 (derive ::power ::numbered)
 (derive ::root ::operator)
 
@@ -499,16 +438,18 @@
   (if (not (vector? math)) math
     (let [[operation & pre-operators] math
           operators (map compute-numeric pre-operators)
-          numeric (group-by number? operators)]
-      (if (and (< 1 (count (get numeric true))) (contains? actual-comp operation))
-        (cond
-          (= 0 (count (get numeric false)))
-          (apply (operation actual-comp) (get numeric true))
-          (= operation ::mult)
-          (into [operation (apply (operation actual-comp) (get numeric true))] (get numeric false))      
-          (= operation ::add)
-          (into [operation] (concat (get numeric false) [(apply (operation actual-comp) (get numeric true))])))      
-        (into [operation] (map compute-numeric operators))))))
+          numeric (group-by number? operators)
+          requisite-operands (cond
+                               (and (isa? operation ::commutative) (isa? operation ::associative)) 1
+                               (isa? operation ::binary) 2
+                               :else ##Inf)]
+      (if (and (<= requisite-operands (count (get numeric true))) (contains? actual-comp operation))
+        (let [computed (apply (operation actual-comp) (get numeric true))]
+          (cond
+            (= 0 (count (get numeric false))) computed
+            (= operation ::mult) (into [operation computed] (get numeric false))
+            (= operation ::add) (into [operation] (concat (get numeric false) [computed]))))
+        (into [operation] operators)))))
 
 (defn recursive-simplify [math]
   (let [recursed (if (vector? math) (into [] (map recursive-simplify math)) math)
