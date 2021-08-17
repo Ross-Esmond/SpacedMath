@@ -487,9 +487,7 @@
    "(a/1)=a"
    "(a^1)=a"
    "((a^b)^c)=(a^(b*c))"
-   "(root(a,b)^c)=(a^(c/b))"
-   "(a*b)*c=a*b*c"
-   "(a+b)+c=a+b+c"])
+   "(root(a,b)^c)=(a^(c/b))"])
 
 (def parsed-rules
   (->> simplification-rules
@@ -501,9 +499,15 @@
   (if (not (vector? math)) math
     (let [[operation & pre-operators] math
           operators (map compute-numeric pre-operators)
-          numeric (every? number? operators)]
-      (if (and numeric (contains? actual-comp operation))
-        (apply (operation actual-comp) operators)      
+          numeric (group-by number? operators)]
+      (if (and (< 1 (count (get numeric true))) (contains? actual-comp operation))
+        (cond
+          (= 0 (count (get numeric false)))
+          (apply (operation actual-comp) (get numeric true))
+          (= operation ::mult)
+          (into [operation (apply (operation actual-comp) (get numeric true))] (get numeric false))      
+          (= operation ::add)
+          (into [operation] (concat (get numeric false) [(apply (operation actual-comp) (get numeric true))])))      
         (into [operation] (map compute-numeric operators))))))
 
 (defn recursive-simplify [math]
