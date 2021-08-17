@@ -183,6 +183,8 @@
   (cond
     (= "" math) 0
     (char? math) 1
+    (number? math) (count (str math))
+    (keyword? math) 1
     :else (match math
             [::add & operands]
             (+ (* 3 (- (count operands) 1)) (reduce + (map latex-score operands)))
@@ -442,14 +444,16 @@
           requisite-operands (cond
                                (and (isa? operation ::commutative) (isa? operation ::associative)) 1
                                (isa? operation ::binary) 2
-                               :else ##Inf)]
-      (if (and (<= requisite-operands (count (get numeric true))) (contains? actual-comp operation))
-        (let [computed (apply (operation actual-comp) (get numeric true))]
-          (cond
-            (= 0 (count (get numeric false))) computed
-            (= operation ::mult) (into [operation computed] (get numeric false))
-            (= operation ::add) (into [operation] (concat (get numeric false) [computed]))))
-        (into [operation] operators)))))
+                               :else ##Inf)
+          result
+          (if (and (<= requisite-operands (count (get numeric true))) (contains? actual-comp operation))
+            (let [computed (apply (operation actual-comp) (get numeric true))]
+              (cond
+                (= 0 (count (get numeric false))) computed
+                (= operation ::mult) (into [operation computed] (get numeric false))
+                (= operation ::add) (into [operation] (concat (get numeric false) [computed]))))
+            (into [operation] operators))]
+      (if (< (latex-score math) (latex-score result)) math result))))
 
 (defn recursive-simplify [math]
   (let [recursed (if (vector? math) (into [] (map recursive-simplify math)) math)
