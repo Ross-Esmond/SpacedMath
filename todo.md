@@ -27,7 +27,7 @@ Math Unifier:
 
 Simplifications Engine:
 - [ ] Roll Simplifications into rules engine.
-- [ ] Make it performant.
+- [x] Make it performant.
 - [ ] Definitions
   - [ ] a + a = 2a
   - [ ] a\*a = a^2

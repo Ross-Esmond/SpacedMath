@@ -491,6 +491,11 @@
    "(a*b)*c=a*b*c"
    "(a+b)+c=a+b+c"])
 
+(def parsed-rules
+  (->> simplification-rules
+       (map parse-mafs)
+       (map (fn [[_ l r]] [l r]))))
+
 (def actual-comp {::add + ::mult * ::power Math/pow})
 (defn compute-numeric [math]
   (if (not (vector? math)) math
@@ -504,14 +509,12 @@
 (defn recursive-simplify [math]
   (let [recursed (if (vector? math) (into [] (map recursive-simplify math)) math)
         simplified
-        (->> simplification-rules
-             (map parse-mafs)
-             (map (fn [[_ l r]] [l r]))
-             (reduce
-               (fn [res [pattern output]]
-                 (let [match (first (math-unify res pattern))]
-                   (if (nil? match) res (symbol-replace output match))))
-               recursed))]
+        (reduce
+          (fn [res [pattern output]]
+            (let [match (first (math-unify res pattern))]
+              (if (nil? match) res (symbol-replace output match))))
+          recursed
+          parsed-rules)]
     (if (= simplified math) math (recursive-simplify simplified))))
 
 (defn rule-simplify [math]
