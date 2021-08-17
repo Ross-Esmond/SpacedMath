@@ -1,7 +1,10 @@
+root = ( equality | exp );
 exp = multary | binary | call | char | number | function | name | ("(", exp, ")");
+equality = exp, "=", exp;
+nested = ( "(", ( multary | binary ), ")" ) | call | char | number | function | name;
 
-multary = exp, { ( "+" | "*" ), exp }+;
-binary = exp, ( "/" | "^" | "=" ), exp;
+multary = nested, { ( "+" | "*" ), nested }+;
+binary = nested, ( "/" | "^" ), nested;
 name = char, char, {char}+;
 call = name, "(", args, ")";
 args = exp, {",", exp}+

@@ -70,6 +70,23 @@
   (is (= (p/variance \t) #{\t}))
   (is (= (p/variance [::p/add 5 \x]) #{\x})))
 
+(deftest rule-simplify
+  (is (= (p/rule-simplify 5) 5))
+  (is (= (p/rule-simplify [::p/add 5 0]) 5))
+  (is (= (p/rule-simplify [::p/add 0 0 0]) 0))
+  (is (= (p/rule-simplify [::p/mult 5 1]) 5))
+  (is (= (p/rule-simplify [::p/mult \x 1 \y]) [::p/mult \x \y]))
+  (is (= (p/rule-simplify [::p/div 5 1]) 5))
+  (is (= (p/rule-simplify [::p/power 5 1]) 5))
+  (is (= (p/rule-simplify [::p/power 5 2]) 25))
+  (is (= (p/rule-simplify [::p/power [::p/mult 5 \x] 1]) [::p/mult 5 \x]))
+  (is (= (p/rule-simplify [::p/power [::p/mult 1 \x] 1]) \x))
+  (is (= (p/rule-simplify [::p/power [::p/power \x 5] -2]) [::p/power \x -10]))
+  (is (= (p/rule-simplify [::p/power [::p/root \x 5] -2]) [::p/power \x [::p/div -2 5]]))
+  (is (= (p/rule-simplify [::p/power [::p/root \x 1] -2]) [::p/power \x -2]))
+  (is (= (p/rule-simplify [::p/mult [::p/mult \x \y] \z]) [::p/mult \x \y \z])))
+  ;(is (= (p/rule-simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w])))
+
 (deftest simplify
   (is (= (p/simplify 5) 5))
   (is (= (p/simplify [::p/add 5 0]) 5))
@@ -158,7 +175,7 @@
   (is (= (p/parse-mafs "f(x)=((x^2)+(2*x*y))")
          [::p/equal [::p/fn \f \x] [::p/add [::p/power \x 2] [::p/mult 2 \x \y]]]))
   (is (= (p/parse-mafs "(x+2+x+y)")
-         [::p/add \x \x \y 2]))
+         [::p/add \x 2 \x \y]))
   (is (= (p/parse-mafs "2^40") [::p/power 2 40]))
   (is (= (p/parse-mafs "1.4^40") [::p/power 1.4 40]))
   (is (= (p/parse-mafs "exp(40)") [::p/exp 40]))
@@ -167,7 +184,13 @@
   (is (= (p/parse-mafs "pi") ::p/pi))
   (is (= (p/parse-mafs "pi*R") [::p/mult ::p/pi \R]))
   (is (= (p/parse-mafs "root(x,2)") [::p/root \x 2]))
-  (is (= (p/parse-mafs "y=x^2") [::p/equal \y [::p/power \x 2]])))
+  (is (= (p/parse-mafs "y=x^2") [::p/equal \y [::p/power \x 2]]))
+  (is (= (p/parse-mafs "x*y*z") [::p/mult \x \y \z]))
+  (is (= (p/parse-mafs "(x*y*z)") [::p/mult \x \y \z]))
+  (is (= (p/parse-mafs "x+y+z") [::p/add \x \y \z]))
+  (is (= (p/parse-mafs "(x+y+z)") [::p/add \x \y \z]))
+  (is (= (p/parse-mafs "x*(y*z)") [::p/mult \x [::p/mult \y \z]]))
+  (is (= (p/parse-mafs "x+(y+z)") [::p/add \x [::p/add \y \z]])))
 
 (deftest latex-score
   (is (= (p/latex-score "") 0))

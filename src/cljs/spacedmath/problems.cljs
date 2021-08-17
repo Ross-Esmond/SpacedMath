@@ -391,11 +391,10 @@
   (first (remove #(nil? (first %)) (map #(do [(first (math-unify math (:match %))) %]) rules))))
 
 (defn symbol-replace [math mapping]
-  (if (not (vector? math)) math
-    (into [] (map
-               (fn [item]
-                 (if (contains? mapping item) (get mapping item) (if (vector? item) (symbol-replace item mapping) item)))
-               math))))
+  (cond
+    (contains? mapping math) (get mapping math)
+    (not (vector? math)) math
+    :else (into [] (map #(symbol-replace % mapping) math))))
 
 (defn prime-pattern [func]
   (if (not (vector? func))
@@ -418,7 +417,6 @@
                      :answer (conj (:answer stack) (:answer result))}))
                 {:text [] :skills #{} :answer [(first simpler)]}
                 (rest simpler))))))
-
 
 (defn basic-derivation [func]
   (if (= (nth func 0) ::equal)
@@ -450,7 +448,9 @@
 
 (defn parse-convert [node]
   (match node
-    (:or [:exp input] [:exp "(" input ")"])
+    [:root input]
+    (parse-convert input)
+    (:or [:exp input] [:exp "(" input ")"] [:nested input] [:nested "(" input ")"])
     (parse-convert input)
     [:multary left operator & remainder]
     (into
@@ -461,7 +461,9 @@
       [(get {\* ::mult \+ ::add} operator) (parse-convert left)]
       (map parse-convert (remove #(or (= % operator) (= % ")")) remainder)))
     (:or [:binary "(" left operator right ")"] [:binary left operator right])
-    [(get {\/ ::div \^ ::power \= ::equal} operator) (parse-convert left) (parse-convert right)]
+    [(get {\/ ::div \^ ::power} operator) (parse-convert left) (parse-convert right)]
+    [:equality left "=" right]
+    [::equal (parse-convert left) (parse-convert right)]
     [:call ident _ args _]
     (into
       [(convert (keyword (string/join (map parse-convert (rest ident)))))]
@@ -477,4 +479,41 @@
     :else
     node))
 
-(defn parse-mafs [code] (simplify (parse-convert (parser code))))
+(defn parse-mafs [code] (parse-convert (parser code)))
+
+(def simplification-rules
+  ["a+0=a"
+   "1*a=a"
+   "(a/1)=a"
+   "(a^1)=a"
+   "((a^b)^c)=(a^(b*c))"
+   "(root(a,b)^c)=(a^(c/b))"
+   "(a*b)*c=a*b*c"
+   "(a+b)+c=a+b+c"])
+
+(def actual-comp {::add + ::mult * ::power Math/pow})
+(defn compute-numeric [math]
+  (if (not (vector? math)) math
+    (let [[operation & pre-operators] math
+          operators (map compute-numeric pre-operators)
+          numeric (every? number? operators)]
+      (if (and numeric (contains? actual-comp operation))
+        (apply (operation actual-comp) operators)      
+        (into [operation] (map compute-numeric operators))))))
+
+(defn recursive-simplify [math]
+  (let [recursed (if (vector? math) (into [] (map recursive-simplify math)) math)
+        simplified
+        (->> simplification-rules
+             (map parse-mafs)
+             (map (fn [[_ l r]] [l r]))
+             (reduce
+               (fn [res [pattern output]]
+                 (let [match (first (math-unify res pattern))]
+                   (if (nil? match) res (symbol-replace output match))))
+               recursed))]
+    (if (= simplified math) math (recursive-simplify simplified))))
+
+(defn rule-simplify [math]
+  (let [post (compute-numeric (recursive-simplify math))]
+    (if (= post math) math (rule-simplify post))))

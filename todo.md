@@ -27,6 +27,7 @@ Math Unifier:
 
 Simplifications Engine:
 - [ ] Roll Simplifications into rules engine.
+- [ ] Make it performant.
 - [ ] Definitions
   - [ ] a + a = 2a
   - [ ] a\*a = a^2
@@ -34,9 +35,9 @@ Simplifications Engine:
   - [ ] a - a = 0
   - [ ] a/a = 1
 - [ ] Calculations
-  - [ ] 2 + 2 = 4
-  - [ ] 2\*2 = 4
-  - [ ] 2^2 = 4
+  - [x] 2 + 2 = 4
+  - [x] 2\*2 = 4
+  - [x] 2^2 = 4
   - [ ] 4/6 = 2/3
 - [ ] Fraction Arithmetic
   - [ ] 1/2 + 1 = 3/2
@@ -44,6 +45,7 @@ Simplifications Engine:
   - [ ] \(2/3)^2 = 4/9
 - [ ] Combinations
   - [ ] \(a+b)+c = a+b+c
+  - [ ] \(a+b)+c+d = a+b+c+d\*
   - [ ] \(ab)c = abc
   - [ ] \(a^b)^c = a^(bc)
 - [ ] Normalization
@@ -58,6 +60,10 @@ Simplifications Engine:
   - [ ] instantanious: before the user even sees it x^1=x
   - [ ] ohio case: with one equality before moving on (x^2/2)'=2x/2=x
   - [ ] belated: saved till the end in case the user doesn't do it 28/49=4/7
+
+\* The rule (a+b)+c=a+b+c causes a bug when there are two outside operators. The
+matching code will always group the operators into a nested addition, which will
+trigger the rule a second time to revert the change, entering an endless loop.
 
 Math structures:
 - [X] Subtraction.\*
