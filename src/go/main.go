@@ -98,12 +98,24 @@ func ProblemServer(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(problems)
 }
 
+func RedirectHandler(w http.ResponseWriter, req *http.Request) {
+	target := "https://" + req.Host + req.URL.Path
+	if len(req.URL.RawQuery) > 0 {
+		target += "?" + req.URL.RawQuery
+	}
+	http.Redirect(w, req, target, http.StatusPermanentRedirect)
+}
 
 func main() {
 	db.AutoMigrate(&Problem{})
 
+	redirect := "http://localhost:3000/api/callback/google"
+	if os.Getenv("BUILD") == "PROD" {
+		redirect = "https://spacedmath.com/api/callback/google"
+	}
+
 	goth.UseProviders(
-		google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), "http://localhost:3000/api/callback/google"),
+		google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), redirect),
 	)
 
 	r := mux.NewRouter()
@@ -118,6 +130,12 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("static/")))
 	http.Handle("/api/", r)
 
-	fmt.Println("listening on localhost:3000")
-	log.Fatal(http.ListenAndServe(":3000", nil))
+	if os.Getenv("BUILD") == "PROD" {
+		http.ListenAndServe(":80", http.HandlerFunc(RedirectHandler))
+		fmt.Println("listening on localhost:443")
+		log.Fatal(http.ListenAndServeTLS(":443", "cert.pem", "key.pem", nil))
+	} else {
+		fmt.Println("listening on localhost:3000")
+		log.Fatal(http.ListenAndServe(":3000", nil))
+	}
 }

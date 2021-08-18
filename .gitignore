@@ -28,3 +28,5 @@ profiles.clj
 /.shadow-cljs/
 
 run.sh
+*.pem
+*.db
