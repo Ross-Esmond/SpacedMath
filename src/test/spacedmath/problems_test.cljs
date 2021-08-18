@@ -50,7 +50,7 @@
    [[::p/derive [::p/div 5 [::p/power \x 4]] \x] [::p/mult -20 [::p/power \x -5]]]
    [[::p/derive [::p/div 1 \x] \x] [::p/mult -1 [::p/power \x -2]]]
    [[::p/derive [::p/add [::p/mult [::p/div 7 4] [::p/power \x 2]] [::p/mult -3 \x] 12] \x]
-    [::p/add [::p/mult 2 [::p/div 7 4] \x] -3]]
+    [::p/add [::p/mult [::p/div 7 2] \x] -3]]
    [[::p/derive [::p/div [::p/exp \y] [::p/sin \y]] \y]
     [::p/div [::p/add [::p/mult [::p/sin \y] [::p/exp \y]] [::p/mult -1 [::p/exp \y] [::p/cos \y]]] [::p/power [::p/sin \y] 2]]]])
 
@@ -87,7 +87,8 @@
   (is (= (p/rule-simplify [::p/power [::p/mult 1 \x] 1]) \x))
   (is (= (p/rule-simplify [::p/power [::p/power \x 5] -2]) [::p/power \x -10]))
   (is (= (p/rule-simplify [::p/power [::p/root \x 5] -2]) [::p/power \x [::p/div -2 5]]))
-  (is (= (p/rule-simplify [::p/power [::p/root \x 1] -2]) [::p/power \x -2])))
+  (is (= (p/rule-simplify [::p/power [::p/root \x 1] -2]) [::p/power \x -2]))
+  (is (= (p/rule-simplify [::p/div 4 6]) [::p/div 2 3])))
   ;(is (= (p/rule-simplify [::p/mult [::p/mult \x \y] \z]) [::p/mult \x \y \z])))
   ;(is (= (p/rule-simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w])))
 
@@ -195,3 +196,13 @@
   (is (= (p/latex-score 50) 2))
   (is (= (p/latex-score 500) 3))
   (is (= (p/latex-score ::p/pi) 1)))
+
+(deftest compute-numeric
+  (is (= (p/compute-numeric [::p/mult 2 2]) 4))
+  (is (= (p/compute-numeric [::p/add 2 2]) 4))
+  (is (= (p/compute-numeric [::p/add [::p/div 1 2] 2]) [::p/div 5 2]))
+  (is (= (p/compute-numeric [::p/mult [::p/div 2 3] 2]) [::p/div 4 3]))
+  (is (= (p/compute-numeric [::p/power [::p/div 2 3] 2]) [::p/div 4 9]))
+  (is (= (p/compute-numeric [::p/power 4 [::p/div 1 2]]) 2))
+  (is (= (p/compute-numeric [::p/power [::p/div 4 9] [::p/div 1 2]]) [::p/div 2 3]))
+  (is (= (p/compute-numeric [::p/div [::p/div 3 2] [::p/div 5 7]]) [::p/div 21 10])))

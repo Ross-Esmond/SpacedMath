@@ -34,15 +34,16 @@ Simplifications Engine:
 - [ ] Cancelation
   - [ ] a - a = 0
   - [ ] a/a = 1
-- [ ] Calculations
+- [x] Calculations
   - [x] 2 + 2 = 4
   - [x] 2\*2 = 4
   - [x] 2^2 = 4
-  - [ ] 4/6 = 2/3
-- [ ] Fraction Arithmetic
-  - [ ] 1/2 + 1 = 3/2
-  - [ ] 2/3\*4/3 = 8/9
-  - [ ] \(2/3)^2 = 4/9
+  - [x] 4/6 = 2/3
+- [x] Fraction Arithmetic
+  - [x] 1/2 + 1 = 3/2
+  - [x] 2/3\*4/3 = 8/9
+  - [x] \(2/3)^2 = 4/9
+  - [x] \(2/3)/\(5/7) = 14/15
 - [ ] Combinations
   - [ ] \(a+b)+c = a+b+c
   - [ ] \(a+b)+c+d = a+b+c+d\*
@@ -53,7 +54,7 @@ Simplifications Engine:
   - [ ] a + (-b) = a - b
   - [ ] a\*(1/b) = a/b
 - [ ] Numeric forms
-  - [ ] fractions: 1/3
+  - [x] fractions: 1/3
   - [ ] decimal: 0.25
   - [ ] irrational: 0.33…
 - [ ] Timing

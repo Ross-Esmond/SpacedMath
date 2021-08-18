@@ -23,12 +23,10 @@
     (vector? func) (reduce #(into %1 (variance %2)) #{} (rest func))
     :else #{}))
 
-(defn numeric? [target] (number? target))
-
 (defn math-fn [math]
   (cond
     (vector? math) (first math)
-    (numeric? math) ::numeric
+    (number? math) ::numeric
     (char? math) ::symbol
     :else math))
 
@@ -149,6 +147,7 @@
 (derive ::power ::binary)
 (derive ::power ::numbered)
 (derive ::root ::operator)
+(derive ::div ::binary)
 
 (def complementary {::sin ::cos
                     ::tan ::cot
@@ -428,26 +427,77 @@
    "(a/1)=a"
    "(a^1)=a"
    "((a^b)^c)=(a^(b*c))"
-   "(root(a,b)^c)=(a^(c/b))"])
+   "(root(a,b)^c)=(a^(c/b))"
+   "-1*(a/b)=(-1*a)/b"])
+
+(defn gcd [a b] (if (zero? b) a (recur b (mod a b))))
+
+(defn reduce-div [div]
+  (if (not (= (first div) ::div)) div
+    (let [[_ div-num div-den] div
+          divisor (gcd div-num div-den)
+          frac [::div (/ div-num divisor) (/ div-den divisor)]]
+      (if (= (nth frac 2) 1) (nth frac 1) frac))))
+
+(defn get-frac [target]
+  (cond
+    (number? target) [::div target 1]
+    (= (first target) ::div) target
+    :else target))
+
+(defn numeric? [target]
+  (or
+    (number? target)
+    (match target
+      [::div (left :guard number?) (right :guard number?)] true
+      :else false)))
 
 (def parsed-rules
   (->> simplification-rules
        (map parse-mafs)
        (map (fn [[_ l r]] [l r]))))
 
-(def actual-comp {::add + ::mult * ::power Math/pow})
+(def actual-comp
+  {::add
+   (fn [operands]
+     (->> operands
+       (map get-frac)
+       (reduce
+         (fn [[_ rn rd] [_ in id]] [::div (+ (* rn id) (* in rd)) (* rd id)])
+         [::div 0 1])
+       (reduce-div)))
+   ::mult
+   (fn [operands]
+     (->> operands
+       (map get-frac)
+       (reduce
+         (fn [[_ rn rd] [_ in id]] [::div (* rn in) (* rd id)])
+         [::div 1 1])
+       (reduce-div)))
+   ::power
+   (fn [operands]
+     (match operands
+       [[::div bn bd] [::div en ed]] (reduce-div [::div (Math/pow bn (/ en ed)) (Math/pow bd (/ en ed))])
+       [[::div bn bd] e] (reduce-div [::div (Math/pow bn e) (Math/pow bd e)])
+       [b [::div en ed]] (Math/pow b (/ en ed))
+       [b e] (Math/pow b e)))
+   ::div
+   (fn [[n d]]
+     (let [[_ nn nd] (get-frac n)
+           [_ dn dd] (get-frac d)]
+       (reduce-div [::div (* nn dd) (* nd dn)])))})
 (defn compute-numeric [math]
   (if (not (vector? math)) math
     (let [[operation & pre-operators] math
           operators (map compute-numeric pre-operators)
-          numeric (group-by number? operators)
+          numeric (group-by numeric? operators)
           requisite-operands (cond
                                (and (isa? operation ::commutative) (isa? operation ::associative)) 1
                                (isa? operation ::binary) 2
                                :else ##Inf)
           result
           (if (and (<= requisite-operands (count (get numeric true))) (contains? actual-comp operation))
-            (let [computed (apply (operation actual-comp) (get numeric true))]
+            (let [computed ((operation actual-comp) (get numeric true))]
               (cond
                 (= 0 (count (get numeric false))) computed
                 (= operation ::mult) (into [operation computed] (get numeric false))
