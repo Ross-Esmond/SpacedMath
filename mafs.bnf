@@ -1,7 +1,7 @@
 root = ( equality | exp );
 exp = multary | binary | call | char | number | function | name | ("(", exp, ")");
 equality = exp, "=", exp;
-nested = ( "(", ( multary | binary ), ")" ) | call | char | number | function | name;
+nested = ( "(", ( multary | binary | exp ), ")" ) | call | char | number | function | name;
 
 multary = nested, { ( "+" | "*" ), nested }+;
 binary = nested, ( "/" | "^" ), nested;

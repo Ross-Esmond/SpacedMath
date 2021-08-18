@@ -178,7 +178,8 @@
   (is (= (p/parse-mafs "x+y+z") [::p/add \x \y \z]))
   (is (= (p/parse-mafs "(x+y+z)") [::p/add \x \y \z]))
   (is (= (p/parse-mafs "x*(y*z)") [::p/mult \x [::p/mult \y \z]]))
-  (is (= (p/parse-mafs "x+(y+z)") [::p/add \x [::p/add \y \z]])))
+  (is (= (p/parse-mafs "x+(y+z)") [::p/add \x [::p/add \y \z]]))
+  (is (= (p/parse-mafs "x+(exp(x))") [::p/add \x [::p/exp \x]])))
 
 (deftest latex-score
   (is (= (p/latex-score "") 0))
