@@ -516,6 +516,11 @@
           parsed-rules)]
     (if (= simplified math) math (recursive-simplify simplified))))
 
+(defn is-nan? [maybe] (false? (= maybe maybe)))
+(defn contains-nan [thing]
+  (if (vector? thing) (some contains-nan thing) (is-nan? thing)))
+
 (defn rule-simplify [math]
-  (let [post (compute-numeric (recursive-simplify math))]
-    (if (= post math) math (rule-simplify post))))
+  (if (contains-nan math) math
+    (let [post (compute-numeric (recursive-simplify math))]
+      (if (= post math) math (rule-simplify post)))))

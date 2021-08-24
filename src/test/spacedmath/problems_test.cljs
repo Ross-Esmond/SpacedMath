@@ -207,3 +207,6 @@
   (is (= (p/compute-numeric [::p/power 4 [::p/div 1 2]]) 2))
   (is (= (p/compute-numeric [::p/power [::p/div 4 9] [::p/div 1 2]]) [::p/div 2 3]))
   (is (= (p/compute-numeric [::p/div [::p/div 3 2] [::p/div 5 7]]) [::p/div 21 10])))
+
+(deftest regressions
+  (is (vector? (p/rule-simplify (p/parse-mafs "y=")))))
