@@ -36,6 +36,8 @@
        (p/prime-pattern [::p/derive [::p/exp \t] \t])
        {:text ["Use the identity to find$$\\frac{d}{dt}\\left(e^{t}\\right) = e^{t}$$"] :skills #{::p/exp} :answer [::p/exp \t]}))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/exp 5] \x])) #{::p/const}))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/exp \x] \x])) #{::p/exp}))
+  (is (= (:skills (p/prime-pattern [::p/derive [::p/sin \x] \x])) #{::p/sin}))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/mult 5 \x] \x])) #{::p/scaler}))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/mult [::p/div 7 4] \x] \x])) #{::p/scaler}))
   (is (= (:skills (p/prime-pattern [::p/derive [::p/add \x \x 5] \x])) #{::p/add ::p/const})))

@@ -1,7 +1,6 @@
 (ns spacedmath.app
   (:require
     [spacedmath.problems :as pr]
-    [spacedmath.list :as ls]
     [reagent.dom :as rdom]
     [reagent.core :as reagent]
     [cljs.core.async :refer [go]]
@@ -11,17 +10,6 @@
     [cljs.core.async :refer [<!]])
   (:require-macros
     [utils :as ut]))
-
-
-(def detailed-list (map #(pr/basic-derivation (pr/convert %)) @ls/math-list))
-
-(def available-skills
-  (reduce
-    (fn [res item]
-      (union res (:skills item)))
-    #{}
-    detailed-list))
-
 
 (set! *warn-on-infer* false)
 
@@ -33,10 +21,17 @@
   (if (vector? data) (into [(keyword (first data))] (map keywordify (rest data))) data))
 
 (def problem-list (reagent/atom []))
+(def available-skills (reagent/atom []))
 
 (go (let [response (<! (http/get "/api/problems"))]
-      (reset! problem-list (map #(keywordify (json->clj (:Problem %))) (:body response)))))
-
+      (let [prl (map #(keywordify (json->clj (:Problem %))) (:body response))]
+        (reset! problem-list prl)
+        (reset! available-skills
+                (reduce
+                  (fn [res item]
+                    (union res (:skills (pr/basic-derivation (pr/convert item)))))
+                  #{}
+                  prl)))))
 
 (def user (reagent/atom nil))
 
@@ -97,7 +92,7 @@
                                                  (swap! filters #(disj % skill)))) 
                             :checked (skill filt)}]
                    [:label (name skill)]])
-                available-skills)) 
+                @available-skills))
             [:button {:on-click (fn [] (reset! active-filters @filters))}
              "Filter"]
             (let [filt @active-filters]
@@ -107,7 +102,7 @@
                            [:label (pr/im (pr/convert (nth @problem-list n)))]])
                 (filter
                   (fn [n]
-                    (let [t (nth detailed-list n)]
+                    (let [t (nth @problem-list n)]
                       (every? #(contains? (:skills t) %) filt)))
                   (range (count @problem-list)))))
             [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth @problem-list @selected))))))}
