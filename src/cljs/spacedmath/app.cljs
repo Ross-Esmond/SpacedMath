@@ -24,7 +24,7 @@
 (def available-skills (reagent/atom []))
 
 (go (let [response (<! (http/get "/api/problems"))]
-      (let [prl (map #(keywordify (json->clj (:Problem %))) (:body response))]
+      (let [prl (map #(keywordify (json->clj %)) (:body response))]
         (reset! problem-list prl)
         (reset! available-skills
                 (reduce

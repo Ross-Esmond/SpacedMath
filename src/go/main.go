@@ -95,7 +95,11 @@ func ProblemServer(res http.ResponseWriter, req *http.Request) {
 	var problems []Problem
 	db.Find(&problems)
 	res.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(res).Encode(problems)
+    problemStrings := make([]string, len(problems))
+    for i, pr := range problems {
+        problemStrings[i] = pr.Problem
+    }
+	json.NewEncoder(res).Encode(problemStrings)
 }
 
 func RedirectHandler(w http.ResponseWriter, req *http.Request) {
