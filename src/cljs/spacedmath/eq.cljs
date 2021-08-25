@@ -5,7 +5,7 @@
     [clojure.string :refer [capitalize trim]]
     [cljs.core.async :refer [go]]
     [cljs-http.client :as http]
-    [spacedmath.problems :as p :refer [parse-mafs mm]])
+    [spacedmath.problems :as p :refer [parse-mjs mm]])
   (:require-macros
     [utils :as ut]))
 
@@ -30,7 +30,7 @@
   (.stringify js/JSON (clj->js input)))
 
 (defn handle-add []
-  (let [parsed (parse-mafs @equation)
+  (let [parsed (parse-mjs @equation)
         answer (:answer (p/prime-pattern [::p/derive (last parsed) \x]))
         problem (p/basic-derivation parsed)]
     (add-problem (jsonify parsed) (jsonify answer) (:skills problem))))
@@ -39,7 +39,7 @@
   (do
     (-> @output
       (.-innerHTML)
-      (set! (let [parsed (parse-mafs @equation)]
+      (set! (let [parsed (parse-mjs @equation)]
               (str
                 (mm parsed)
                 (if (and (vector? parsed) (= (first parsed) ::p/equal))
@@ -54,11 +54,9 @@
 (def explanation "
 You must be logged in to add equations, but feel free to do so. Note that this project is in active development, and this tool in particular is only intended for internal use. As such, it lacks some “nice-to-haves.” There is no verification of the equations before they are added and there will be no visual indication that the equation was added successfully. You must simply check the main page.
 
-The language used is custom. I call it mafs. It looks like this: `f(x)=(3*(x^2))+(4*x)+5`. You may notice it relies heavily on parenthesis. If an equation doesn’t look right, try adding more parenthesis. The system also requires a left and a right side of an equality, with the left being the function name and the right being the equation to solve. A function name may be in the form of f(x) or just a variable like y, but you may use any single letter function and variable names you’d like. Common function calls like sin(x) may also be used, though I have only implemented trig and exp().
-
 So far, the system should be able to derive polynomials, the exp() function, trig functions, product rule, and quotient rule. More to come.
 
-Try: f(x)=exp(x)+(5*(x^2))+tan(x)+sin(2) Notice that the system not only finds the derivative, but the skills involved in finding it. This is the essence of the system.
+Try: f(x)=exp(x)+5*(x^2)+tan(x)+sin(2) Notice that the system not only finds the derivative, but the skills involved in finding it. This is the essence of the system.
   ")
 
 (defn main-panel []

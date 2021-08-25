@@ -2,7 +2,7 @@
   (:require
     [cljs.test :refer-macros [deftest is testing run-tests]]
     [spacedmath.problems :as p :refer [convert]]
-    [spacedmath.list :refer [detailed-math-list]]
+    [spacedmath.list :refer [math-list detailed-math-list]]
     [clojure.string :refer [includes?]]))
 
 (deftest convert-numbers
@@ -212,3 +212,26 @@
 
 (deftest regressions
   (is (vector? (p/rule-simplify (p/parse-mafs "y=")))))
+
+(def mjs-test
+  [["f(x)=" nil]
+   ["f(x)=x^2" [:equal [:fn \f \x] [:power \x 2]]]
+   ["y=x+2" [:equal \y [:add \x 2]]]
+   ["g(z)=c*z" [:equal [:fn \g \z] [:mult \c \z]]]
+   ["y=c/d" [:equal \y [:div \c \d]]]
+   ["y=sin(x)" [:equal \y [:sin \x]]]
+   ["y=exp(x)" [:equal \y [:exp \x]]]
+   ["y=e^x" [:equal \y [:exp \x]]]
+   ["y=(x+2)^2" [:equal \y [:power [:add \x 2] 2]]]
+   ["y=-1" [:equal \y -1]]
+   ["y=-x" [:equal \y [:mult -1 \x]]]
+   ["y=1-x" [:equal \y [:add 1 [::mult -1 \x]]]]])
+
+(deftest parse-mjs
+  (doseq [[input output] mjs-test]
+    (is (= (p/parse-mjs input) (p/convert output)) input)))
+
+(deftest cyclic-mjs
+  (doseq [math @math-list]
+    (let [text (p/print-mjs (p/convert math))]
+      (is (= (p/parse-mjs text) (p/convert math)) text))))

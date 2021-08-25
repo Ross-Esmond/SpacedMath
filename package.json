@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@auth0/auth0-spa-js": "^1.15.0",
+    "mathjs": "^9.4.4",
     "react": "17.0.1",
     "react-dom": "17.0.1"
   }

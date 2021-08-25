@@ -6,8 +6,11 @@
     [clojure.set :refer [intersection map-invert]]
     [instaparse.core :as insta]
     [clojure.core.match :refer [match]]
-    [clojure.math.combinatorics :as combo])
+    [clojure.math.combinatorics :as combo]
+    ["mathjs" :as mathjs])
   (:require-macros [utils :as ut]))
+
+(set! *warn-on-infer* false)
 
 (defn convert [target]
   (cond
@@ -15,6 +18,7 @@
     (set? target) (set (map convert target))
     (number? target) target
     (char? target) target
+    (nil? target) nil
     :else (keyword "spacedmath.problems" (name target))))
 
 (defn variance [func]
@@ -90,13 +94,13 @@
       (flat-out root))))
 
 (declare rule-simplify)
-(defn old-simplify [func]
+(defn normalize-structure [func]
   (if (not (vector? func)) func
     (let [[operator & operands] func
-           root (into [operator] (map old-simplify operands))]
+           root (into [operator] (map normalize-structure operands))]
       (combine-associative-operands root))))
 
-(defn simplify [func] (rule-simplify (old-simplify func)))
+(defn simplify [func] (rule-simplify (normalize-structure func)))
 
 (defmulti pretty-print math-fn)
 (defmethod pretty-print ::add [root]
@@ -190,7 +194,8 @@
             [(operator :guard #(isa? % ::exec)) & operands]
             (+ (count (name operator)) 2 (reduce + (map latex-score operands)))
             [operator & operands]
-            (+ (operator latex-cost) (reduce + (map latex-score operands))))))
+            (+ (operator latex-cost) (reduce + (map latex-score operands)))
+            :else ##Inf)))
 
 
 (def rules
@@ -524,3 +529,52 @@
   (if (contains-nan math) math
     (let [post (compute-numeric (recursive-simplify math))]
       (if (= post math) math (rule-simplify post)))))
+
+(defn obj->clj
+  [obj]
+  (if (goog.isObject obj)
+    (-> (fn [result key]
+          (let [v (goog.object/get obj key)]
+            (if (= "function" (goog/typeOf v))
+              result
+              (assoc result key (obj->clj v)))))
+        (reduce {} (.getKeys goog/object obj)))
+    obj))
+
+(defn mjs->clj [math]
+  (match math
+    {"op" "+", "args" {"0" l, "1" r}} [::add (mjs->clj l) (mjs->clj r)]
+    {"op" "*", "args" {"0" l, "1" r}} [::mult (mjs->clj l) (mjs->clj r)]
+    {"op" "^", "args" {"0" l, "1" r}} (let [b (mjs->clj l) p (mjs->clj r)] (if (= b \e) [::exp p] [::power b p]))
+    {"op" "/", "args" {"0" l, "1" r}} [::div (mjs->clj l) (mjs->clj r)]
+    {"fn" "unaryMinus", "args" {"0" a}} (let [i (mjs->clj a)] (if (number? i) (- i) [::mult -1 i]))
+    {"fn" "subtract", "args" {"0" l "1" r}} [::add (mjs->clj l) [::mult -1 (mjs->clj r)]]
+    {"type" "AssignmentNode", "object" l, "value" r} [::equal (mjs->clj l) (mjs->clj r)]
+    {"type" "FunctionAssignmentNode", "name" n, "params" {"0" a}, "expr" e} [::equal [::fn n (mjs->clj a)] (mjs->clj e)]
+    {"type" "FunctionNode", "fn" {"name" (n :guard char?)} "args" {"0" a}} [::fn n (mjs->clj a)]
+    {"type" "FunctionNode" "fn" {"name" "root"} "args" {"0" b "1" r}} [::root (mjs->clj b) (mjs->clj r)]
+    {"type" "FunctionNode", "fn" {"name" n} "args" {"0" a}} [(keyword "spacedmath.problems" n) (mjs->clj a)]
+    {"type" "ParenthesisNode", "content" c} (mjs->clj c)
+    {"type" "ConstantNode", "value" v} (js/parseFloat v)
+    {"type" "SymbolNode", "name" c} (if (< 1 (count c)) (keyword "spacedmath.problems" c) c)
+    :else math))
+(defn print-mjs [math]
+  (match math
+    [::add & r] (str "(" (string/join "+" (map print-mjs r)) ")")
+    [::mult & r] (str "(" (string/join "*" (map print-mjs r)) ")")
+    [::power l r] (str "(" (print-mjs l) "^" (print-mjs r) ")")
+    [::div l r] (str "(" (print-mjs l) "/" (print-mjs r) ")")
+    [::root l r] (str "root(" (print-mjs l) "," (print-mjs r) ")")
+    [::equal l r] (str (print-mjs l)  "=" (print-mjs r))
+    [::fn n a] (str n "(" a ")")
+    [(n :guard #(isa? % ::unary)) i] (str (name n) "(" (print-mjs i) ")")
+    (c :guard char?) c
+    (n :guard #(isa? % ::named)) (name n)
+    :else math))
+
+(defn parse-mjs [code]
+  (try
+    (normalize-structure (mjs->clj (obj->clj (mathjs/parse code))))
+    (catch js/Error _ nil)))
+(defn prime-mjs [math v] (mjs->clj (obj->clj (mathjs/derivative (print-mjs math) v))))
+(defn simplify-mjs [math] (mjs->clj (obj->clj (mathjs/simplify (print-mjs math)))))
