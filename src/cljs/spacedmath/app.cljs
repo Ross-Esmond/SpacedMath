@@ -24,14 +24,14 @@
 (def available-skills (reagent/atom []))
 
 (go (let [response (<! (http/get "/api/problems"))]
-      (let [prl (map #(keywordify (json->clj %)) (:body response))]
+      (let [prl (map (fn [r] [r (keywordify (json->clj r))]) (:body response))]
         (reset! problem-list prl)
         (reset! available-skills
                 (reduce
                   (fn [res item]
                     (union res (:skills (pr/basic-derivation (pr/convert item)))))
                   #{}
-                  prl)))))
+                  (map last prl))))))
 
 (def user (reagent/atom nil))
 
@@ -64,6 +64,13 @@
 
 (add-watch math nil card-build)
 
+(defn handle-update [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth (map last @problem-list) @selected))))))
+(defn handle-delete [ev]
+  (if (= (.-ctrlKey ev) true)
+    (let [target (first (nth @problem-list @selected))]
+      (go (let [response (<! (http/delete "/api/problems" {:json-params {:Problem target}}))
+                data (json->clj (:body response))]
+            (if data (swap! problem-list #(remove (fn [p] (= (first p) target)) %))))))))
 
 (defn main-panel []
   (reagent/create-class
@@ -99,14 +106,14 @@
               (map
                 (fn [n] [:div
                            [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
-                           [:label (pr/im (pr/convert (nth @problem-list n)))]])
+                           [:label (pr/im (pr/convert (nth (map last @problem-list) n)))]])
                 (filter
                   (fn [n]
-                    (let [t (nth @problem-list n)]
+                    (let [t (nth (map last @problem-list) n)]
                       (every? #(contains? (:skills t) %) filt)))
-                  (range (count @problem-list)))))
-            [:button {:on-click (fn [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth @problem-list @selected))))))}
-             "Update"]]
+                  (range (count (map last @problem-list))))))
+            [:button {:on-click handle-update} "Update"]
+            [:button {:on-click handle-delete} "Ctrl-Click to Delete"]]
            [:div {:class "card" :style {:margin "20px"} :ref (fn [el] (reset! target el))}]]])
      :component-did-update card-build}))
     

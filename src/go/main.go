@@ -102,6 +102,21 @@ func ProblemServer(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(problemStrings)
 }
 
+func ProblemDeleter(res http.ResponseWriter, req *http.Request) {
+	var problems []Problem
+	session, _ := store.Get(req, "session-name")
+	email := session.Values["email"]
+	if email == nil {
+		res.WriteHeader(http.StatusUnauthorized)
+	} else {
+		var problem Problem
+		json.NewDecoder(req.Body).Decode(&problem)
+		db.Where("Problem = ? AND Author = ?", problem.Problem, email).Delete(&problems)
+        res.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(res).Encode(true)
+	}
+}
+
 func RedirectHandler(w http.ResponseWriter, req *http.Request) {
 	target := "https://" + req.Host + req.URL.Path
 	if len(req.URL.RawQuery) > 0 {
@@ -129,6 +144,7 @@ func main() {
 	r.HandleFunc("/api/logout", LogoutHandler)
 	r.HandleFunc("/api/problems", ProblemHandler).Methods("POST")
 	r.HandleFunc("/api/problems", ProblemServer).Methods("GET")
+	r.HandleFunc("/api/problems", ProblemDeleter).Methods("DELETE")
 
 	http.Handle("/js/", http.FileServer(http.Dir("resources/public/")))
 	http.Handle("/", http.FileServer(http.Dir("static/")))
