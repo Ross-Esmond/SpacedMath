@@ -363,15 +363,22 @@
                 {:text [] :skills #{} :answer [(first simpler)]}
                 (rest simpler))))))
 
+(defn detect-variable [func]
+  (match func
+    [::equal [::fn n a] _] a
+    [::equal _ r] (first (variance r))
+    :else nil))
+
 (defn basic-derivation [func]
   (if (= (nth func 0) ::equal)
     (let [[_ solution equation] func
-          variable (if (and (vector? solution) (= (first solution) ::fn)) (last solution) (first (variance equation)))
+          variable (detect-variable func)
           derived (prime-pattern [::derive equation variable])]
       {:problem (str "Differentiate the function" (mm func))
        :steps (:text derived)
        :skills (:skills derived)
-       :answer (str (mm [::equal [::derive solution variable] (:answer derived)]))})
+       :answer (str (mm [::equal [::derive solution variable] (:answer derived)]))
+       :raw-answer (:answer derived)})
     nil))
 
 
@@ -576,5 +583,7 @@
   (try
     (normalize-structure (mjs->clj (obj->clj (mathjs/parse code))))
     (catch js/Error _ nil)))
-(defn prime-mjs [math v] (mjs->clj (obj->clj (mathjs/derivative (print-mjs math) v))))
-(defn simplify-mjs [math] (mjs->clj (obj->clj (mathjs/simplify (print-mjs math)))))
+(defn prime-mjs [math v] (try
+                           (normalize-structure (mjs->clj (obj->clj (mathjs/derivative (print-mjs math) v))))
+                           (catch js/Error _ nil)))
+(defn simplify-mjs [math] (normalize-structure (mjs->clj (obj->clj (mathjs/simplify (print-mjs math))))))

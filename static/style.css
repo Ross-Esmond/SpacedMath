@@ -56,3 +56,17 @@ header div {
   float: right;
   cursor: pointer;
 }
+
+.verified {
+  border: 2px solid lightgreen;
+  color: darkgreen;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.unverified {
+  border: 2px solid red;
+  color: darkred;
+  border-radius: 8px;
+  padding: 10px;
+}

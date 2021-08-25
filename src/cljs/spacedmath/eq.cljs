@@ -46,7 +46,10 @@
                   (let [problem (p/basic-derivation parsed)]
                     (str
                       (map #(name %) (:skills problem))
-                      (:answer problem))))))))
+                      (:answer problem)
+                      (if (= (p/prime-mjs (nth parsed 2) (p/detect-variable parsed)) (:raw-answer problem))
+                        "<div class=\"verified\">Answer verified with Math.js.</div>"
+                        "<div class=\"unverified\">Answer did not match that of Math.js.</div>"))))))))
     (. js/MathJax typeset)))
 
 (add-watch equation nil render)
