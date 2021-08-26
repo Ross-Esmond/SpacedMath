@@ -504,10 +504,7 @@
     (let [[operation & pre-operators] math
           operators (map compute-numeric pre-operators)
           numeric (group-by numeric? operators)
-          requisite-operands (cond
-                               (and (isa? operation ::commutative) (isa? operation ::associative)) 1
-                               (isa? operation ::binary) 2
-                               :else ##Inf)
+          requisite-operands 2
           result
           (if (and (<= requisite-operands (count (get numeric true))) (contains? actual-comp operation))
             (let [computed ((operation actual-comp) (get numeric true))]

@@ -75,7 +75,8 @@
 (deftest rule-simplify
   (is (= (p/rule-simplify 5) 5))
   (is (= (p/rule-simplify [::p/add 5 0]) 5))
-  (is (= (p/rule-simplify [::p/add 1 \x]) [::p/add \x 1]))
+  (is (= (p/rule-simplify [::p/add 1 \x]) [::p/add 1 \x]))
+  (is (= (p/rule-simplify [::p/mult \x 2]) [::p/mult \x 2]))
   (is (= (p/rule-simplify [::p/add 0 0 0]) 0))
   (is (= (p/rule-simplify [::p/mult 5 1]) 5))
   (is (= (p/rule-simplify [::p/mult \x 1 \y]) [::p/mult \x \y]))

@@ -54,9 +54,9 @@ Simplifications Engine:
   - [ ] \(-1)/2 = -(1/2)
   - [ ] a + (-b) = a - b
   - [ ] a\*(1/b) = a/b
-- [ ] Don't move
-  - [ ] x5 = x5
-  - [ ] 1+x = 1+x
+- [x] Don't move
+  - [x] x5 = x5
+  - [x] 1+x = 1+x
 - [ ] Numeric forms
   - [x] fractions: 1/3
   - [ ] decimal: 0.25

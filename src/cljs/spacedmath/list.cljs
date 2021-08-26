@@ -32,7 +32,7 @@
    [[:equal [:fn \g \x] [:mult [:add \x [:mult 2 [:root \x 2]]] [:exp \x]]]
     #{:product :exp :add :power :scaler}
     [:add
-     [:mult [:add [:power "x" [:div -1 2]] 1] [:exp "x"]]
+     [:mult [:add 1 [:power "x" [:div -1 2]]] [:exp "x"]]
      [:mult [:add "x" [:mult 2 [:root "x" 2]]] [:exp "x"]]]]])
 
 (swap! math-list #(concat % (map first  detailed-math-list)))
