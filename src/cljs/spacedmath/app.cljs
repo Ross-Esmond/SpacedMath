@@ -24,14 +24,15 @@
 (def available-skills (reagent/atom []))
 
 (go (let [response (<! (http/get "/api/problems"))]
-      (let [prl (map (fn [r] [r (keywordify (json->clj r))]) (:body response))]
-        (reset! problem-list prl)
+      (let [prl (->> (:body response)
+                     (map (fn [r] [r (pr/basic-derivation (pr/convert (keywordify (json->clj r))))])))]
+        (reset! problem-list (into [] prl))
         (reset! available-skills
                 (reduce
                   (fn [res item]
-                    (union res (:skills (pr/basic-derivation (pr/convert item)))))
+                    (union res (:skills (last item))))
                   #{}
-                  (map last prl))))))
+                  prl)))))
 
 (def user (reagent/atom nil))
 
@@ -58,13 +59,14 @@
       (set! (str
               "Skills: " (map #(name %) (:skills @math)) "<br /><br />"
               (:problem @math)
-              (clojure.string/join " " (:steps @math))
-              (:answer @math))))
+              "Answer:" (:answer @math)
+              "<hr/>Steps Taken (for debugging)<br/><br/>"
+              (clojure.string/join " " (:steps @math)))))
     (. js/MathJax typeset)))
 
 (add-watch math nil card-build)
 
-(defn handle-update [] (if @selected (reset! math (pr/basic-derivation (pr/convert (nth (map last @problem-list) @selected))))))
+(defn handle-update [] (if @selected (reset! math (nth (map last @problem-list) @selected))))
 (defn handle-delete [ev]
   (if (= (.-ctrlKey ev) true)
     (let [target (first (nth @problem-list @selected))]
@@ -97,7 +99,7 @@
                                                  (-> e .-target .-checked)
                                                  (swap! filters #(conj % skill))
                                                  (swap! filters #(disj % skill)))) 
-                            :checked (skill filt)}]
+                            :checked (contains? filt skill)}]
                    [:label (name skill)]])
                 @available-skills))
             [:button {:on-click (fn [] (reset! active-filters @filters))}
@@ -106,14 +108,14 @@
               (map
                 (fn [n] [:div
                            [:input {:type "radio" :name "problems" :value n :on-change #(reset! selected n)}]
-                           [:label (pr/im (pr/convert (nth (map last @problem-list) n)))]])
+                           [:label (pr/im (:raw-problem (nth (map last @problem-list) n)))]])
                 (filter
                   (fn [n]
-                    (let [t (nth (map last @problem-list) n)]
+                    (let [t (last (nth @problem-list n))]
                       (every? #(contains? (:skills t) %) filt)))
-                  (range (count (map last @problem-list))))))
-            [:button {:on-click handle-update} "Update"]
-            [:button {:on-click handle-delete} "Ctrl-Click to Delete"]]
+                  (range (count @problem-list)))))
+            [:button {:on-click handle-update :disabled (= @selected nil)} "Display Selection"][:br][:br]
+            [:button {:on-click handle-delete :disabled (= @selected nil)} "Ctrl-Click to Delete"]]
            [:div {:class "card" :style {:margin "20px"} :ref (fn [el] (reset! target el))}]]])
      :component-did-update card-build}))
     

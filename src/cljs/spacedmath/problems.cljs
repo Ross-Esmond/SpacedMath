@@ -374,7 +374,8 @@
     (let [[_ solution equation] func
           variable (detect-variable func)
           derived (prime-pattern [::derive equation variable])]
-      {:problem (str "Differentiate the function" (mm func))
+      {:raw-problem func
+       :problem (str "Differentiate the function" (mm func))
        :steps (:text derived)
        :skills (:skills derived)
        :answer (str (mm [::equal [::derive solution variable] (:answer derived)]))
