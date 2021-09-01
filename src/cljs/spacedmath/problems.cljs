@@ -252,16 +252,23 @@
 
 
 (swap! rules (fn [current]
-               (concat
-                 current
-                 (map
-                   (fn [[func res]] {:match [::derive [func \x] \x]
-                                     :result res
-                                     :skills #{func}
-                                     :text (fn [origional solution _]
-                                             (str "Use the identity to find"
-                                                  (mm [::equal origional solution])))})
-                   identities))))
+               (into []
+                 (concat
+                   current
+                   (map
+                     (fn [[func res]] {:match [::derive [func \x] \x]
+                                       :result res
+                                       :skills #{func}
+                                       :text (fn [origional solution _]
+                                               (str "Use the identity to find"
+                                                    (mm [::equal origional solution])))})
+                     identities)))))
+
+(swap! rules (fn [current]
+               (conj current {:match [::derive [\f [\g \x]] \x]
+                              :result [::mult [::derive [\g \x] \x] [::derive [\f [\g \x]] [\g \x]]]
+                              :skills #{::chain}
+                              :text #(str "")})))
 
 (defn my-keys [item]
   (let [key-store (keys item)]
@@ -276,7 +283,7 @@
 
 (defn spare-variance-invert [mapping]
   (let [inverted (variance-invert mapping)
-        whitelisted (into {} (map (fn [[l t]] [l (if (vector? t) (into #{} (rest t)) t)]) inverted))]
+        whitelisted (into {} (map (fn [[l t]] [l (if (vector? t) (variance t) t)]) inverted))]
     whitelisted))
 
 (defn value-compatible? [a b]
@@ -319,7 +326,12 @@
   (cond
     (or (number? pattern) (keyword? pattern)) (if (= math pattern) [{}] [])
     (char? pattern) [{pattern math}]
-    (and (vector? pattern) (char? (first pattern))) [{pattern math}]
+    (and (vector? pattern) (char? (first pattern)))
+    (if (vector? (last pattern))
+      (if (and (vector? math) (vector? (last math)))
+        (into [] (map #(clean-merge % {pattern math}) (math-unify (last math) (last pattern))))
+        [])
+      [{pattern math}])
     (and (vector? math) (vector? pattern))
     (cond
       (and (isa? (first math) ::commutative) (isa? (first math) ::associative))

@@ -54,7 +54,9 @@
    [[::p/derive [::p/add [::p/mult [::p/div 7 4] [::p/power \x 2]] [::p/mult -3 \x] 12] \x]
     [::p/add [::p/mult [::p/div 7 2] \x] -3]]
    [[::p/derive [::p/div [::p/exp \y] [::p/sin \y]] \y]
-    [::p/div [::p/add [::p/mult [::p/sin \y] [::p/exp \y]] [::p/mult -1 [::p/exp \y] [::p/cos \y]]] [::p/power [::p/sin \y] 2]]]])
+    [::p/div [::p/add [::p/mult [::p/sin \y] [::p/exp \y]] [::p/mult -1 [::p/exp \y] [::p/cos \y]]] [::p/power [::p/sin \y] 2]]]
+   [[::p/derive [::p/sin [::p/exp \x]] \x]
+    [::p/mult [::p/exp \x] [::p/cos [::p/exp \x]]]]])
 
 (deftest prime-pattern-answers
   (doseq [[problem answer] answers]
