@@ -25,7 +25,11 @@
   (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2"))
   (is (= (p/latex (convert :sin)) "\\sin\\left(Nothing\\right)"))
   (is (= (p/latex (convert :root)) "\\sqrt[Nothing]{Nothing}"))
-  (is (= (p/latex (convert :exp)) "e^{Nothing}")))
+  (is (= (p/latex (convert :exp)) "e^{Nothing}"))
+  (is (= (p/latex (convert :theta)) "\\theta "))
+  (is (= (p/latex (convert [:power :theta 2])) "\\theta ^{2}"))
+  (is (= (p/latex (convert [:power :pi 2])) "\\pi ^{2}"))
+  (is (= (p/latex (convert [:fn \f :theta])) "f(\\theta )")))
 
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
@@ -45,6 +49,8 @@
 (def answers
   [[[::p/derive 5 \x] 0]
    [[::p/derive \x \x] 1]
+   [[::p/derive [::p/mult ::p/theta \x] \x] ::p/theta]
+   [[::p/derive [::p/mult ::p/theta \x] ::p/theta] \x]
    [[::p/derive [::p/add \x 5] \x] 1]
    [[::p/derive [::p/mult \c \x] \x] \c]
    [[::p/derive [::p/mult [::p/sin \x] [::p/exp \x]] \x]
@@ -58,7 +64,9 @@
    [[::p/derive [::p/sin [::p/exp \x]] \x]
     [::p/mult [::p/exp \x] [::p/cos [::p/exp \x]]]]
    [[::p/derive [::p/power [::p/exp \u] 3] \u]
-    [::p/mult [::p/exp \u] 3 [::p/power [::p/exp \u] 2]]]])
+    [::p/mult [::p/exp \u] 3 [::p/power [::p/exp \u] 2]]]
+   [[::p/derive [::p/exp ::p/theta] ::p/theta]
+    [::p/exp ::p/theta]]])
 
 (deftest prime-pattern-answers
   (doseq [[problem answer] answers]
@@ -230,7 +238,9 @@
    ["y=(x+2)^2" [:equal \y [:power [:add \x 2] 2]]]
    ["y=-1" [:equal \y -1]]
    ["y=-x" [:equal \y [:mult -1 \x]]]
-   ["y=1-x" [:equal \y [:add 1 [::mult -1 \x]]]]])
+   ["y=1-x" [:equal \y [:add 1 [::mult -1 \x]]]]
+   ["theta" :theta]
+   ["pi" :pi]])
 
 (deftest parse-mjs
   (doseq [[input output] mjs-test]

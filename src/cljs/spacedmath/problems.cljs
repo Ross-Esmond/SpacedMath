@@ -21,9 +21,12 @@
     (nil? target) nil
     :else (keyword "spacedmath.problems" (name target))))
 
+(defn variable? [func]
+  (or (char? func) (isa? func ::variable)))
+
 (defn variance [func]
   (cond
-    (char? func) #{func}
+    (variable? func) #{func}
     (vector? func) (reduce #(into %1 (variance %2)) #{} (rest func))
     :else #{}))
 
@@ -42,7 +45,7 @@
 (defn latex [item] (if (isa? item ::operator) (latex-multi (ensure-vector item)) (latex-multi item)))
 (defmethod latex-multi ::exec [func] (str "\\" (name (first func)) (parens (latex (first (rest func))))))
 (defmethod latex-multi ::symbol [sym] sym)
-(defmethod latex-multi ::named [sym] (str "\\" (str (name sym) " ")))
+(defmethod latex-multi ::named [sym] (str "\\" (name sym) " "))
 (defmethod latex-multi ::add [func] (string/join " + " (map latex (rest func))))
 (defmethod latex-multi ::subtract [[_ l r]] (str (latex l) " - " (latex r)))
 (defmethod latex-multi ::exp [func] (str "e^{" (latex (first (rest func))) "}"))
@@ -65,18 +68,18 @@
         (rest func)))))
 (defmethod latex-multi ::power [func]
   (let [target (nth func 1)
-        printed (if (or (char? target) (number? target)) target (parens (latex target)))]
+        printed (if (or (isa? target ::named) (char? target) (number? target)) (latex target) (parens (latex target)))]
     (str printed "^{" (latex (nth func 2)) "}")))
 (defmethod latex-multi ::derive [func]
   (let [[_ eq target] func]
     (if (and (vector? eq) (= (first eq) ::fn))
       (let [[_ ident variable] eq]
-        (str ident "'(" variable ")"))
-      (str "\\frac{d}{d" (nth func 2) "}" (parens (latex (nth func 1)))))))
+        (str ident "'(" (latex variable) ")"))
+      (str "\\frac{d}{d" (latex (nth func 2)) "}" (parens (latex (nth func 1)))))))
 (defmethod latex-multi ::equal [func] (str (latex (nth func 1)) " = " (latex (nth func 2))))
 (defmethod latex-multi ::div [func]
   (str "\\frac{" (latex (nth func 1)) "}{" (latex (nth func 2)) "}"))
-(defmethod latex-multi ::fn [[_ ident variable]] (str ident \( variable \)))
+(defmethod latex-multi ::fn [[_ ident variable]] (str ident \( (latex variable) \)))
 (defmethod latex-multi ::root [[_ target root]] (str "\\sqrt[" (latex root) "]{" (latex target) "}"))
 (defmethod latex-multi :default [_] "Nothing")
 
@@ -165,7 +168,8 @@
                  ::csc [::mult -1 [::csc \x] [::cot \x]]
                  ::exp [::exp \x]})
 
-(def greek #{::pi})
+(def greek #{::pi ::theta})
+(derive ::theta ::variable)
 
 (swap! skills (fn [sk] (into sk (keys identities))))
 
@@ -289,10 +293,10 @@
 (defn value-compatible? [a b]
   (do
     (cond
-      (and (char? a) (char? b)) (= a b)
+      (and (variable? a) (variable? b)) (= a b)
       (and (set? a) (set? b)) true
-      (and (set? a) (char? b)) (contains? a b)
-      (and (set? b) (char? a)) (contains? b a)
+      (and (set? a) (variable? b)) (contains? a b)
+      (and (set? b) (variable? a)) (contains? b a)
       :default false)))
 
 (defn clean-merge [a b]
@@ -580,6 +584,7 @@
     {"type" "ParenthesisNode", "content" c} (mjs->clj c)
     {"type" "ConstantNode", "value" v} (js/parseFloat v)
     {"type" "SymbolNode", "name" c} (if (< 1 (count c)) (keyword "spacedmath.problems" c) c)
+    (s :guard #(and (string? %) (not (char? %)))) (keyword "spacedmath.problems" s)
     :else math))
 (defn print-mjs [math]
   (match math
