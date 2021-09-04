@@ -537,14 +537,34 @@
             (into [operation] operators))]
       (if (< (latex-score math) (latex-score result)) math result))))
 
+(defn abs [n] (max n (- n)))
+
+(defn consolidate-negation [root]
+  (match root
+    [::mult & r]
+    (let [[normalized n]
+          (reduce
+            (fn [[stack n] item]
+              (cond
+                (number? item) [(conj stack (abs item)) (if (< item 0) (+ n 1) n)]
+                :else [(conj stack item) n]))
+            [[::mult] 0]
+            r)]
+      (if (even? n) normalized
+        (if (number? (nth normalized 1))
+          (into [::mult] (concat [(- (nth normalized 1))] (subvec normalized 2)))
+          (into [::mult -1] (rest normalized)))))
+    :else root))
+
 (defn recursive-simplify [math]
   (let [recursed (if (vector? math) (into [] (map recursive-simplify math)) math)
+        consolidated (consolidate-negation recursed)
         simplified
         (reduce
           (fn [res [pattern output]]
             (let [match (first (math-unify res pattern))]
               (if (nil? match) res (symbol-replace output match))))
-          recursed
+          consolidated
           parsed-rules)]
     (if (= simplified math) math (recursive-simplify simplified))))
 

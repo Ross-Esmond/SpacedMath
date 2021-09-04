@@ -103,7 +103,9 @@
   (is (= (p/rule-simplify [::p/power [::p/power \x 5] -2]) [::p/power \x -10]))
   (is (= (p/rule-simplify [::p/power [::p/root \x 5] -2]) [::p/power \x [::p/div -2 5]]))
   (is (= (p/rule-simplify [::p/power [::p/root \x 1] -2]) [::p/power \x -2]))
-  (is (= (p/rule-simplify [::p/div 4 6]) [::p/div 2 3])))
+  (is (= (p/rule-simplify [::p/div 4 6]) [::p/div 2 3]))
+  (is (= (p/rule-simplify [::p/mult \x 4 [::p/exp \x]]) [::p/mult \x 4 [::p/exp \x]]))
+  (is (= (p/rule-simplify [::p/mult \x -4 [::p/exp \x]]) [::p/mult -4 \x [::p/exp \x]])))
   ;(is (= (p/rule-simplify [::p/mult [::p/mult \x \y] \z]) [::p/mult \x \y \z])))
   ;(is (= (p/rule-simplify [::p/add \x [::p/add \y \z] \w]) [::p/add \x \y \z \w])))
 
