@@ -322,16 +322,22 @@
               (into [] (repeat amount [(first math)]))
               (map (fn [m g] [m g]) (rest math) combo))))))))
 
+(declare math-unify)
+(defn math-unify-fn [math pattern]
+  (if (vector? (last pattern))
+    (if (vector? math)
+      (->> (rest math)
+        (mapcat #(math-unify % (last pattern)))
+        (map #(clean-merge % {pattern math}))
+        (into []))
+      [])
+    [{pattern math}]))
+
 (defn math-unify [math pattern]
   (cond
     (or (number? pattern) (keyword? pattern)) (if (= math pattern) [{}] [])
     (char? pattern) [{pattern math}]
-    (and (vector? pattern) (char? (first pattern)))
-    (if (vector? (last pattern))
-      (if (and (vector? math) (vector? (last math)))
-        (into [] (map #(clean-merge % {pattern math}) (math-unify (last math) (last pattern))))
-        [])
-      [{pattern math}])
+    (and (vector? pattern) (char? (first pattern))) (math-unify-fn math pattern)
     (and (vector? math) (vector? pattern))
     (cond
       (and (isa? (first math) ::commutative) (isa? (first math) ::associative))

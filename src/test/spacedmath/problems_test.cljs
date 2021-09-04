@@ -56,7 +56,9 @@
    [[::p/derive [::p/div [::p/exp \y] [::p/sin \y]] \y]
     [::p/div [::p/add [::p/mult [::p/sin \y] [::p/exp \y]] [::p/mult -1 [::p/exp \y] [::p/cos \y]]] [::p/power [::p/sin \y] 2]]]
    [[::p/derive [::p/sin [::p/exp \x]] \x]
-    [::p/mult [::p/exp \x] [::p/cos [::p/exp \x]]]]])
+    [::p/mult [::p/exp \x] [::p/cos [::p/exp \x]]]]
+   [[::p/derive [::p/power [::p/exp \u] 3] \u]
+    [::p/mult [::p/exp \u] 3 [::p/power [::p/exp \u] 2]]]])
 
 (deftest prime-pattern-answers
   (doseq [[problem answer] answers]
