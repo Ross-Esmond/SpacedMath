@@ -9,8 +9,7 @@
   (is (= (convert [:mult -1 [:exp \x]]) [::p/mult -1 [::p/exp \x]])))
 
 (deftest latex
-  (is (= (p/latex (convert [:mult -1 [:sin \x]])) "-\\sin\\left(x\\right)")
-      "negative latex printing failed")
+  (is (= (p/latex (convert [:mult -1 [:sin \x]])) "-\\sin(x)"))
   (is (= (p/latex (convert [:mult 3 \x])) "3x") "printing with a scaler multiple failed")
   (is (= (p/latex (convert :pi)) "\\pi ") "printing pi failed")
   (is (= (p/latex (convert [:mult 5 2])) "5\\left(2\\right)") "printing two scaler multiples failed")
@@ -23,13 +22,14 @@
   (is (= (p/latex (convert [:power [:power \x 2] 2])) "\\left(x^{2}\\right)^{2}"))
   (is (= (p/latex (convert [:add 5 3 2])) "5 + 3 + 2"))
   (is (= (p/latex (convert [:add [:subtract 5 3] 2])) "5 - 3 + 2"))
-  (is (= (p/latex (convert :sin)) "\\sin\\left(Nothing\\right)"))
+  (is (= (p/latex (convert :sin)) "\\sin(Nothing)"))
   (is (= (p/latex (convert :root)) "\\sqrt[Nothing]{Nothing}"))
   (is (= (p/latex (convert :exp)) "e^{Nothing}"))
   (is (= (p/latex (convert :theta)) "\\theta "))
   (is (= (p/latex (convert [:power :theta 2])) "\\theta ^{2}"))
   (is (= (p/latex (convert [:power :pi 2])) "\\pi ^{2}"))
-  (is (= (p/latex (convert [:fn \f :theta])) "f(\\theta )")))
+  (is (= (p/latex (convert [:fn \f :theta])) "f(\\theta )"))
+  (is (= (p/latex (convert [::ln \x])) "\\ln(x)")))
 
 (deftest prime-pattern
   (is (= (p/prime-pattern [::p/exp \x]) {:text [] :skills #{} :answer [::p/exp \x]}))
@@ -66,7 +66,9 @@
    [[::p/derive [::p/power [::p/exp \u] 3] \u]
     [::p/mult [::p/exp \u] 3 [::p/power [::p/exp \u] 2]]]
    [[::p/derive [::p/exp ::p/theta] ::p/theta]
-    [::p/exp ::p/theta]]])
+    [::p/exp ::p/theta]]
+   [[::p/derive [::p/power 2 \x] \x]
+    [::p/mult [::p/power 2 \x] [::p/ln 2]]]])
 
 (deftest prime-pattern-answers
   (doseq [[problem answer] answers]
@@ -196,7 +198,8 @@
   (is (= (p/parse-mafs "(x+y+z)") [::p/add \x \y \z]))
   (is (= (p/parse-mafs "x*(y*z)") [::p/mult \x [::p/mult \y \z]]))
   (is (= (p/parse-mafs "x+(y+z)") [::p/add \x [::p/add \y \z]]))
-  (is (= (p/parse-mafs "x+(exp(x))") [::p/add \x [::p/exp \x]])))
+  (is (= (p/parse-mafs "x+(exp(x))") [::p/add \x [::p/exp \x]]))
+  (is (= (p/parse-mafs "ln(x)") [::p/ln \x])))
 
 (deftest latex-score
   (is (= (p/latex-score "") 0))
@@ -210,6 +213,7 @@
   (is (= (p/latex-score [::p/exp \a]) 2))
   (is (= (p/latex-score [::p/parens [::p/add \a \b]]) 7))
   (is (= (p/latex-score [::p/sin \x]) 6))
+  (is (= (p/latex-score [::p/ln \x]) 5))
   (is (= (p/latex-score 5) 1))
   (is (= (p/latex-score 50) 2))
   (is (= (p/latex-score 500) 3))
@@ -242,7 +246,8 @@
    ["y=-x" [:equal \y [:mult -1 \x]]]
    ["y=1-x" [:equal \y [:add 1 [::mult -1 \x]]]]
    ["theta" :theta]
-   ["pi" :pi]])
+   ["pi" :pi]
+   ["y=ln(x)" [:equal \y [:ln \x]]]])
 
 (deftest parse-mjs
   (doseq [[input output] mjs-test]

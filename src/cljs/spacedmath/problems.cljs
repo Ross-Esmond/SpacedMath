@@ -43,7 +43,7 @@
 
 (defmulti latex-multi math-fn)
 (defn latex [item] (if (isa? item ::operator) (latex-multi (ensure-vector item)) (latex-multi item)))
-(defmethod latex-multi ::exec [func] (str "\\" (name (first func)) (parens (latex (first (rest func))))))
+(defmethod latex-multi ::exec [func] (str "\\" (name (first func)) "(" (latex (first (rest func))) ")"))
 (defmethod latex-multi ::symbol [sym] sym)
 (defmethod latex-multi ::named [sym] (str "\\" (name sym) " "))
 (defmethod latex-multi ::add [func] (string/join " + " (map latex (rest func))))
@@ -132,8 +132,6 @@
 (defn mm [eq] (str "$$" (latex (pretty-print eq)) "$$"))
 
 
-(def skills (atom #{::add ::power ::chain ::const}))
-
 (derive ::binary ::operator)
 (derive ::add ::binary)
 (derive ::mult ::binary)
@@ -155,6 +153,7 @@
 (derive ::power ::numbered)
 (derive ::root ::operator)
 (derive ::div ::binary)
+(derive ::ln ::exec)
 
 (def complementary {::sin ::cos
                     ::tan ::cot
@@ -170,8 +169,6 @@
 
 (def greek #{::pi ::theta})
 (derive ::theta ::variable)
-
-(swap! skills (fn [sk] (into sk (keys identities))))
 
 (doseq [n (keys identities)] (derive n ::ident))
 
@@ -252,6 +249,11 @@
                [::power [\g \x] 2]]
       :skills #{::div}
       :text #(str "Apply the Quotient Rule."
+                  (mm [::equal %1 %2]))}
+     {:match [::derive [::power \c \x] \x]
+      :result [::mult [::power \c \x] [::ln \c]]
+      :skills #{::np}
+      :text #(str "Use the identity."
                   (mm [::equal %1 %2]))}]))
 
 
