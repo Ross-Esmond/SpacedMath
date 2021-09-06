@@ -47,9 +47,10 @@
                     (str
                       (map #(name %) (:skills problem))
                       (:answer problem)
-                      (if (= (p/prime-mjs (nth parsed 2) (p/detect-variable parsed)) (:raw-answer problem))
-                        "<div class=\"verified\">Answer verified with Math.js.</div>"
-                        "<div class=\"unverified\">Answer did not match that of Math.js.</div>"))))))))
+                      (let [mjs-answer (p/simplify-mjs (p/prime-mjs (nth parsed 2) (p/detect-variable parsed)))]
+                        (if (p/mathequals mjs-answer (p/simplify-mjs (:raw-answer problem)))
+                          "<div class=\"verified\">Answer verified with Math.js.</div>"
+                          (str "<div class=\"unverified\">Answer did not match that of Math.js: " (p/im mjs-answer) "</div>"))))))))))
     (. js/MathJax typeset)))
 
 (add-watch equation nil render)

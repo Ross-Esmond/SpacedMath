@@ -173,6 +173,14 @@
                                               :skills (:skills rule)
                                               :answer (:result rule)})))))
 
+(deftest mathequals
+  (is (p/mathequals [::p/exp \x] [::p/exp \x]))
+  (is (not (p/mathequals [::p/exp \x] [::p/exp \y])))
+  (is (not (p/mathequals [::p/div \x \y] [::p/div \y \x])))
+  (is (p/mathequals [::p/mult \x \y] [::p/mult \y \x]))
+  (is (not (p/mathequals [::p/add \x \y] [::p/mult \y \x])))
+  (is (p/mathequals [::p/add \a [::p/mult \b \c]] [::p/add [::p/mult \c \b] \a])))
+
 (deftest parser
   (is (= (p/parse-mafs "(50*50)") [::p/mult 50 50]))
   (is (= (p/parse-mafs "f(x)") [::p/fn \f \x]))

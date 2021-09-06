@@ -406,20 +406,25 @@
        :raw-answer (:answer derived)})
     nil))
 
-
 (declare mathequals)
+(declare mathequals-normalized)
 
 (defn mathexact [a b]
   (if (and (vector? a) (vector? b))
-    (and (= (count a) (count b)) (every? true? (map mathequals a b)))
+    (and (= (count a) (count b)) (every? true? (map mathequals-normalized a b)))
     (= a b)))
 
-(defn mathequals [a b]
-  (if (and (vector? a) (vector? b))
-    (if (isa? (first a) ::commutative)
-      (or (mathexact a b) (mathexact [(first a) (nth a 2) (nth a 1)] b))
-      (mathexact a b))
+(defn mathequals-normalized [a b]
+  (if (and (vector? a) (vector? b) (isa? (first a) ::commutative))
+      (and (= (first a) (first b))
+           (= (count a) (count b))
+           (->> (combogen (- (count b) 1) (- (count b) 1))
+                (map (fn [p] (into [] (map #(nth b (+ % 1)) p))))
+                (some (fn [b] (mathexact (into [] (rest a)) b)))))
     (mathexact a b)))
+
+(defn mathequals [a b]
+  (mathequals-normalized (normalize-structure a) (normalize-structure b)))
 
 (def parser (insta/parser (ut/swig "mafs.bnf")))
 
@@ -629,4 +634,6 @@
 (defn prime-mjs [math v] (try
                            (normalize-structure (mjs->clj (obj->clj (mathjs/derivative (print-mjs math) v))))
                            (catch js/Error _ nil)))
-(defn simplify-mjs [math] (normalize-structure (mjs->clj (obj->clj (mathjs/simplify (print-mjs math))))))
+(defn simplify-mjs [math] (try
+                            (normalize-structure (mjs->clj (obj->clj (mathjs/simplify (print-mjs math)))))
+                            (catch js/Error _ nil)))
